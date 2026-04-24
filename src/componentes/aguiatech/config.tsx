@@ -87,8 +87,9 @@ function FormularioConfigAgente({ config }: { config: ConfigAgente | undefined }
 
   // Connection test state
   const [testandoConexao, setTestandoConexao] = useState(false)
-  const [resultadoConexao, setResultadoConexao] = useState<'sucesso' | 'erro' | null>(null)
+  const [resultadoConexao, setResultadoConexao] = useState<'sucesso' | 'aviso' | 'erro' | null>(null)
   const [mensagemConexao, setMensagemConexao] = useState<string | null>(null)
+  const [latenciaConexao, setLatenciaConexao] = useState<number | null>(null)
 
   // Load API key from config
   const { data: configMap } = useQuery<Record<string, string>>({
@@ -143,7 +144,7 @@ function FormularioConfigAgente({ config }: { config: ConfigAgente | undefined }
       })
       const data = await res.json()
       setKeyValida(data.valida)
-      setKeyErro(data.erro || null)
+      setKeyErro(data.erro || data.aviso || null)
     } catch {
       setKeyValida(false)
       setKeyErro('Erro ao validar chave')
@@ -156,8 +157,8 @@ function FormularioConfigAgente({ config }: { config: ConfigAgente | undefined }
     setTestandoConexao(true)
     setResultadoConexao(null)
     setMensagemConexao(null)
+    setLatenciaConexao(null)
     try {
-      // First validate API key
       const res = await fetch('/api/openrouter/validar-key', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -165,8 +166,16 @@ function FormularioConfigAgente({ config }: { config: ConfigAgente | undefined }
       })
       const data = await res.json()
       if (data.valida) {
-        setResultadoConexao('sucesso')
-        setMensagemConexao(`Conexão bem-sucedida com OpenRouter! Modelo ativo: ${obterNomeCurtoModelo(formulario.modelo)}`)
+        if (data.aviso) {
+          // Key is valid but rate-limited
+          setResultadoConexao('aviso')
+          setMensagemConexao(data.aviso)
+        } else {
+          setResultadoConexao('sucesso')
+          const modeloNome = data.modeloTestado ? obterNomeCurtoModelo(data.modeloTestado) : obterNomeCurtoModelo(formulario.modelo)
+          setMensagemConexao(`Conexão bem-sucedida com OpenRouter! Modelo testado: ${modeloNome}`)
+        }
+        if (data.latencia) setLatenciaConexao(data.latencia)
       } else {
         setResultadoConexao('erro')
         setMensagemConexao(data.erro || 'Falha na conexão. Verifique sua API Key.')
@@ -250,19 +259,23 @@ function FormularioConfigAgente({ config }: { config: ConfigAgente | undefined }
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <Card className="border-l-4 border-l-amber-500">
+        <Card className={`border-l-4 ${resultadoConexao === 'sucesso' ? 'border-l-emerald-500' : resultadoConexao === 'aviso' ? 'border-l-amber-500' : resultadoConexao === 'erro' ? 'border-l-red-500' : 'border-l-amber-500'}`}>
           <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3 flex-1">
                 <div className={`size-10 rounded-lg flex items-center justify-center ${
                   resultadoConexao === 'sucesso'
                     ? 'bg-emerald-100 dark:bg-emerald-900/30'
-                    : resultadoConexao === 'erro'
-                      ? 'bg-red-100 dark:bg-red-900/30'
-                      : 'bg-amber-100 dark:bg-amber-900/30'
+                    : resultadoConexao === 'aviso'
+                      ? 'bg-amber-100 dark:bg-amber-900/30'
+                      : resultadoConexao === 'erro'
+                        ? 'bg-red-100 dark:bg-red-900/30'
+                        : 'bg-amber-100 dark:bg-amber-900/30'
                 }`}>
                   {resultadoConexao === 'sucesso' ? (
                     <ShieldCheck className="size-5 text-emerald-600 dark:text-emerald-400" />
+                  ) : resultadoConexao === 'aviso' ? (
+                    <ShieldCheck className="size-5 text-amber-600 dark:text-amber-400" />
                   ) : resultadoConexao === 'erro' ? (
                     <ShieldAlert className="size-5 text-red-600 dark:text-red-400" />
                   ) : (
@@ -276,6 +289,10 @@ function FormularioConfigAgente({ config }: { config: ConfigAgente | undefined }
                       <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 text-[10px] border-0">
                         ● Conectado
                       </Badge>
+                    ) : resultadoConexao === 'aviso' ? (
+                      <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 text-[10px] border-0">
+                        ● Conectado (Limitado)
+                      </Badge>
                     ) : resultadoConexao === 'erro' ? (
                       <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 text-[10px] border-0">
                         ● Desconectado
@@ -283,6 +300,12 @@ function FormularioConfigAgente({ config }: { config: ConfigAgente | undefined }
                     ) : (
                       <Badge variant="outline" className="text-[10px]">
                         ○ Não testado
+                      </Badge>
+                    )}
+                    {latenciaConexao && resultadoConexao !== 'erro' && (
+                      <Badge variant="outline" className="text-[9px] gap-1">
+                        <Activity className="size-2.5" />
+                        {latenciaConexao}ms
                       </Badge>
                     )}
                   </div>
@@ -310,7 +333,7 @@ function FormularioConfigAgente({ config }: { config: ConfigAgente | undefined }
                     </span>
                   </div>
                   {mensagemConexao && (
-                    <p className={`text-xs mt-1 ${resultadoConexao === 'sucesso' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                    <p className={`text-xs mt-1 ${resultadoConexao === 'sucesso' ? 'text-emerald-600 dark:text-emerald-400' : resultadoConexao === 'aviso' ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
                       {mensagemConexao}
                     </p>
                   )}
@@ -327,6 +350,8 @@ function FormularioConfigAgente({ config }: { config: ConfigAgente | undefined }
                   <Loader2 className="size-3.5 animate-spin" />
                 ) : resultadoConexao === 'sucesso' ? (
                   <CheckCircle2 className="size-3.5 text-emerald-500" />
+                ) : resultadoConexao === 'aviso' ? (
+                  <CheckCircle2 className="size-3.5 text-amber-500" />
                 ) : resultadoConexao === 'erro' ? (
                   <XCircle className="size-3.5 text-red-500" />
                 ) : (
@@ -766,13 +791,22 @@ function FormularioConfigAgente({ config }: { config: ConfigAgente | undefined }
                         Validar
                       </Button>
                     </div>
-                    {keyValida === true && (
+                    {keyValida === true && !keyErro && (
                       <motion.p
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1"
                       >
                         <CheckCircle2 className="size-3" /> Chave válida! Você pode usar os modelos gratuitos.
+                      </motion.p>
+                    )}
+                    {keyValida === true && keyErro && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1"
+                      >
+                        <ShieldCheck className="size-3" /> {keyErro}
                       </motion.p>
                     )}
                     {keyValida === false && (

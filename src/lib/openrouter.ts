@@ -83,6 +83,16 @@ export async function obterApiKeyOpenRouter(): Promise<string | null> {
 /**
  * Call OpenRouter API for chat completions
  */
+/**
+ * Get fallback models for a given model (same or similar capabilities)
+ */
+function obterModelosFallback(modeloPreferido: string): string[] {
+  const modelos = MODELOS_OPENROUTER_GRATUITOS.map(m => m.id)
+  // Put preferred model first, then others
+  const semPreferido = modelos.filter(m => m !== modeloPreferido)
+  return [modeloPreferido, ...semPreferido]
+}
+
 export async function chatOpenRouter(
   mensagens: MensagemOpenRouter[],
   modelo: string = 'meta-llama/llama-3.3-70b-instruct:free',
@@ -101,89 +111,207 @@ export async function chatOpenRouter(
     }
   }
 
-  try {
-    const response = await fetch(OPENROUTER_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${key}`,
-        'HTTP-Referer': 'https://aguiatech.com.br',
-        'X-Title': 'Aguiatech - Agente de IA',
-      },
-      body: JSON.stringify({
-        model: modelo,
-        messages: mensagens,
-        temperature: 0.7,
-        max_tokens: 4096,
-      }),
-    })
+  const modelosParaTentar = obterModelosFallback(modelo)
 
-    if (!response.ok) {
-      const errorBody = await response.text()
-      console.error('OpenRouter API error:', response.status, errorBody)
-      return {
-        conteudo: '',
-        tokensIn: 0,
-        tokensOut: 0,
-        modelo,
-        sucesso: false,
-        erro: `Erro da API OpenRouter (${response.status}): ${errorBody}`,
+  for (const modeloAtual of modelosParaTentar) {
+    try {
+      const response = await fetch(OPENROUTER_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`,
+          'HTTP-Referer': 'https://aguiatech.com.br',
+          'X-Title': 'Aguiatech - Agente de IA',
+        },
+        body: JSON.stringify({
+          model: modeloAtual,
+          messages: mensagens,
+          temperature: 0.7,
+          max_tokens: 4096,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorBody = await response.text()
+
+        // Rate-limited: try next model
+        if (response.status === 429) {
+          console.warn(`OpenRouter: modelo ${modeloAtual} rate-limited, tentando próximo...`)
+          continue
+        }
+
+        // Auth errors: don't try other models
+        if (response.status === 401 || response.status === 403) {
+          return {
+            conteudo: '',
+            tokensIn: 0,
+            tokensOut: 0,
+            modelo: modeloAtual,
+            sucesso: false,
+            erro: 'Chave API inválida ou sem permissão',
+          }
+        }
+
+        // Other errors
+        console.error('OpenRouter API error:', response.status, errorBody)
+        return {
+          conteudo: '',
+          tokensIn: 0,
+          tokensOut: 0,
+          modelo: modeloAtual,
+          sucesso: false,
+          erro: `Erro da API OpenRouter (${response.status}): ${errorBody}`,
+        }
       }
-    }
 
-    const data: RespostaOpenRouter = await response.json()
-    const conteudo = data.choices[0]?.message?.content || ''
-    const tokensIn = data.usage?.prompt_tokens ?? 0
-    const tokensOut = data.usage?.completion_tokens ?? 0
+      const data: RespostaOpenRouter = await response.json()
+      const conteudo = data.choices[0]?.message?.content || ''
+      const tokensIn = data.usage?.prompt_tokens ?? 0
+      const tokensOut = data.usage?.completion_tokens ?? 0
 
-    return {
-      conteudo,
-      tokensIn,
-      tokensOut,
-      modelo: data.model || modelo,
-      sucesso: true,
+      return {
+        conteudo,
+        tokensIn,
+        tokensOut,
+        modelo: data.model || modeloAtual,
+        sucesso: true,
+      }
+    } catch (error) {
+      console.error('OpenRouter API request failed:', error)
+      continue
     }
-  } catch (error) {
-    console.error('OpenRouter API request failed:', error)
-    return {
-      conteudo: '',
-      tokensIn: 0,
-      tokensOut: 0,
-      modelo,
-      sucesso: false,
-      erro: `Erro ao conectar com OpenRouter: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
-    }
+  }
+
+  return {
+    conteudo: '',
+    tokensIn: 0,
+    tokensOut: 0,
+    modelo,
+    sucesso: false,
+    erro: 'Todos os modelos estão com limite de requisições atingido. Tente novamente em alguns segundos.',
   }
 }
 
 /**
- * Validate an OpenRouter API key
+ * Models to try for validation (in order of preference)
+ * Uses smaller/faster models less likely to be rate-limited
  */
-export async function validarApiKeyOpenRouter(apiKey: string): Promise<{ valida: boolean; erro?: string }> {
-  try {
-    const response = await fetch(OPENROUTER_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'HTTP-Referer': 'https://aguiatech.com.br',
-        'X-Title': 'Aguiatech - Agente de IA',
-      },
-      body: JSON.stringify({
-        model: 'meta-llama/llama-3.3-70b-instruct:free',
-        messages: [{ role: 'user', content: 'Hi' }],
-        max_tokens: 5,
-      }),
-    })
+const MODELOS_VALIDACAO = [
+  'google/gemma-4-26b-a4b-it:free',
+  'z-ai/glm-4.5-air:free',
+  'google/gemma-4-31b-it:free',
+  'openai/gpt-oss-20b:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
+] as const
 
-    if (response.ok) {
-      return { valida: true }
+export interface ResultadoValidacao {
+  valida: boolean
+  erro?: string
+  aviso?: string
+  modeloTestado?: string
+  latencia?: number
+}
+
+/**
+ * Validate an OpenRouter API key by attempting a minimal chat completion.
+ * Tries multiple free models as fallback if one is rate-limited.
+ */
+export async function validarApiKeyOpenRouter(apiKey: string): Promise<ResultadoValidacao> {
+  if (!apiKey || typeof apiKey !== 'string' || apiKey.trim().length < 10) {
+    return { valida: false, erro: 'Chave API muito curta ou inválida' }
+  }
+
+  const key = apiKey.trim()
+
+  // Try each model until one succeeds or we get a definitive answer
+  for (const modelo of MODELOS_VALIDACAO) {
+    const inicio = Date.now()
+    try {
+      const response = await fetch(OPENROUTER_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`,
+          'HTTP-Referer': 'https://aguiatech.com.br',
+          'X-Title': 'Aguiatech - Agente de IA',
+        },
+        body: JSON.stringify({
+          model: modelo,
+          messages: [{ role: 'user', content: 'Hi' }],
+          max_tokens: 5,
+        }),
+      })
+
+      const latencia = Date.now() - inicio
+
+      // Success - key is valid
+      if (response.ok) {
+        return {
+          valida: true,
+          modeloTestado: modelo,
+          latencia,
+        }
+      }
+
+      // Parse error response for more details
+      let errorDetail = ''
+      try {
+        const errorBody = await response.text()
+        const parsed = JSON.parse(errorBody)
+        errorDetail = parsed?.error?.message || parsed?.error?.code || ''
+      } catch {
+        // Ignore parse errors
+      }
+
+      // Rate-limited: key IS valid, but this model is throttled
+      // Try next model instead of failing immediately
+      if (response.status === 429) {
+        continue // Try next model
+      }
+
+      // Authentication errors: key is genuinely invalid
+      if (response.status === 401 || response.status === 403) {
+        return {
+          valida: false,
+          erro: `Chave API inválida ou sem permissão (${response.status})`,
+          modeloTestado: modelo,
+          latencia,
+        }
+      }
+
+      // Payment required / insufficient credits
+      if (response.status === 402) {
+        return {
+          valida: false,
+          erro: 'Créditos insuficientes na conta OpenRouter',
+          modeloTestado: modelo,
+          latencia,
+        }
+      }
+
+      // Server errors: might be temporary, try next model
+      if (response.status >= 500) {
+        continue
+      }
+
+      // Other client errors
+      return {
+        valida: false,
+        erro: errorDetail || `Erro na validação (${response.status})`,
+        modeloTestado: modelo,
+        latencia,
+      }
+    } catch (error) {
+      // Network error - try next model
+      continue
     }
+  }
 
-    const errorBody = await response.text()
-    return { valida: false, erro: `Chave inválida (${response.status})` }
-  } catch (error) {
-    return { valida: false, erro: `Erro de conexão: ${error instanceof Error ? error.message : 'desconhecido'}` }
+  // All models were rate-limited or errored - key is valid but currently throttled
+  return {
+    valida: true,
+    aviso: 'Chave válida, mas todos os modelos gratuitos estão com limite de requisições atingido no momento. Tente novamente em alguns segundos.',
+    modeloTestado: MODELOS_VALIDACAO[0],
   }
 }
 

@@ -415,6 +415,11 @@ export function Agentes() {
 
   const formularioValido = formulario.nome.trim() !== '' && formulario.personalidade.trim() !== ''
 
+  // Abrir Orquestrador
+  const abrirOrquestrador = useCallback(() => {
+    setSecaoAtiva('orquestrador')
+  }, [setSecaoAtiva])
+
   // Conversar com agente
   const conversarComAgente = useCallback((agenteId: string) => {
     setAgenteIdParaConversa(agenteId)
@@ -655,6 +660,68 @@ export function Agentes() {
           </button>
         )}
       </div>
+
+      {/* ─── Agente Orquestrador (Special Card) ──────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <Card className="border-2 border-violet-500/30 bg-gradient-to-br from-violet-500/5 via-card to-amber-500/5 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group"
+          onClick={abrirOrquestrador}
+        >
+          <div className="h-2 bg-gradient-to-r from-violet-500 via-purple-500 to-amber-500" />
+          <CardContent className="p-5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              {/* Avatar */}
+              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/20 text-2xl shrink-0 group-hover:scale-105 transition-transform duration-300">
+                🧠
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-base font-bold text-violet-700 dark:text-violet-300">
+                    Agente Orquestrador
+                  </h3>
+                  <Badge className="text-[9px] bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300 border-violet-200 dark:border-violet-700">
+                    <Activity className="size-2.5 mr-0.5" />
+                    Multi-Agente
+                  </Badge>
+                  <Badge className="text-[9px] bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-700">
+                    🔥 Destaque
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Sistema inteligente de debug que decide dinamicamente quais agentes ativar, em qual ordem e quantas vezes executar cada um. 9 agentes especializados trabalhando juntos.
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  {['🔍 Diagnóstico', '🎯 Causa Raiz', '⚙️ Simulação', '🔧 Correção', '✅ Testes', '♻️ Refatoração', '⚠️ Riscos', '🧠 Verificação', '📋 Checklist'].map((ag) => (
+                    <span key={ag} className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] bg-muted/60 border border-border/30 text-muted-foreground">
+                      {ag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col items-center gap-2 shrink-0">
+                <Button
+                  className="gap-2 bg-violet-600 hover:bg-violet-700 text-white shadow-md shadow-violet-500/20 group-hover:shadow-lg group-hover:shadow-violet-500/30 transition-all duration-300"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    abrirOrquestrador()
+                  }}
+                >
+                  <Cpu className="size-4" />
+                  Usar Orquestrador
+                </Button>
+                <span className="text-[9px] text-muted-foreground">
+                  Adaptação dinâmica
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* ─── Agent Grid ───────────────────────────────────────────────────── */}
       {isLoading ? (
