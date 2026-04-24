@@ -76,3 +76,35 @@ Stage Summary:
 - Backend uses SSE streaming for real-time agent execution updates
 - Dynamic adaptation: re-executes agents if verification fails
 - Lint passes cleanly, dev server running without errors
+
+---
+Task ID: 5
+Agent: main
+Task: Create file upload API and update database schema for file attachments in chat messages
+
+Work Log:
+- Added `anexos` field (String?, JSON) to Mensagem model in prisma/schema.prisma for storing attachment metadata
+- Ran `bun run db:push` to apply schema migration - database synced successfully
+- Created `/src/app/api/upload/route.ts` with POST handler supporting:
+  - File type validation (imagem, documento, codigo categories)
+  - File size limit (10MB max)
+  - UUID-based unique filenames stored in public/uploads/
+  - Base64 encoding for images (for VLM analysis)
+  - Text content extraction for documents and code files
+- Updated `/src/app/api/conversas/[id]/mensagens/route.ts` POST handler:
+  - Added `anexosData` extraction from request body
+  - Included `anexos` field when creating user messages (JSON-stringified)
+  - Added attachment type detection (imagem, documento, codigo)
+  - Added file context injection (`contextoArquivos`) into system prompt for document/code attachments
+  - Added VLM (createVision) integration for image attachments:
+    - For non-OpenRouter providers: VLM directly analyzes images and overrides LLM response
+    - For OpenRouter provider: VLM describes images first, then appends description to LLM context
+- Lint passes cleanly with no errors
+- Dev server running without errors
+
+Stage Summary:
+- File upload API fully functional at /api/upload
+- Database schema updated with anexos field on Mensagem model
+- VLM (Vision Language Model) integration for image analysis in chat
+- Document/code file content injected into LLM context
+- No frontend changes made (separate task)
