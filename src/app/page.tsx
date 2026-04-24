@@ -16,6 +16,7 @@ import { ConexoesMCP } from '@/componentes/aguiatech/conexoes-mcp'
 import { Agendador } from '@/componentes/aguiatech/agendador'
 import { Config } from '@/componentes/aguiatech/config'
 import { Agentes } from '@/componentes/aguiatech/agentes'
+import { Orquestrador } from '@/componentes/aguiatech/orquestrador'
 import { useEstadoAguiatech, type SecaoAtiva } from '@/lib/estado'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -40,6 +41,7 @@ import {
   Sun,
   Search,
   Bot,
+  Cpu,
 } from 'lucide-react'
 
 const secoesNavegacao: { secao: SecaoAtiva; rotulo: string; icone: React.ElementType; atalho: string }[] = [
@@ -47,11 +49,12 @@ const secoesNavegacao: { secao: SecaoAtiva; rotulo: string; icone: React.Element
   { secao: 'conversas', rotulo: 'Conversas', icone: MessageSquare, atalho: 'Ctrl+2' },
   { secao: 'habilidades', rotulo: 'Habilidades', icone: Sparkles, atalho: 'Ctrl+3' },
   { secao: 'agentes', rotulo: 'Agentes', icone: Bot, atalho: 'Ctrl+4' },
-  { secao: 'memorias', rotulo: 'Memórias', icone: Brain, atalho: 'Ctrl+5' },
-  { secao: 'ferramentas', rotulo: 'Ferramentas', icone: Wrench, atalho: 'Ctrl+6' },
-  { secao: 'conexoes-mcp', rotulo: 'Conexões MCP', icone: Link, atalho: 'Ctrl+7' },
-  { secao: 'agendador', rotulo: 'Agendador', icone: Clock, atalho: 'Ctrl+8' },
-  { secao: 'config', rotulo: 'Configurações', icone: Settings, atalho: 'Ctrl+9' },
+  { secao: 'orquestrador', rotulo: 'Orquestrador', icone: Cpu, atalho: 'Ctrl+5' },
+  { secao: 'memorias', rotulo: 'Memórias', icone: Brain, atalho: 'Ctrl+6' },
+  { secao: 'ferramentas', rotulo: 'Ferramentas', icone: Wrench, atalho: 'Ctrl+7' },
+  { secao: 'conexoes-mcp', rotulo: 'Conexões MCP', icone: Link, atalho: 'Ctrl+8' },
+  { secao: 'agendador', rotulo: 'Agendador', icone: Clock, atalho: 'Ctrl+9' },
+  { secao: 'config', rotulo: 'Configurações', icone: Settings, atalho: 'Ctrl+0' },
 ]
 
 // Page transition animation variants
@@ -113,6 +116,10 @@ function CommandPalette() {
             <Sparkles className="mr-2 size-4 text-amber-600 dark:text-amber-400" />
             <span>Nova Habilidade</span>
           </CommandItem>
+          <CommandItem onSelect={() => { executarAcao('orquestrador'); setCommandPaletteAberta(false) }}>
+            <Cpu className="mr-2 size-4 text-violet-600 dark:text-violet-400" />
+            <span>Debug com Orquestrador</span>
+          </CommandItem>
           <CommandItem onSelect={() => { executarAcao('memorias'); setCommandPaletteAberta(false) }}>
             <Brain className="mr-2 size-4 text-amber-600 dark:text-amber-400" />
             <span>Nova Memória</span>
@@ -159,12 +166,13 @@ function AtalhosGlobais() {
         e.preventDefault()
         setTheme(theme === 'dark' ? 'light' : 'dark')
       }
-      // Ctrl+1-9 para navegação
+      // Ctrl+0-9 para navegação
       if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
-        const num = parseInt(e.key)
-        if (num >= 1 && num <= 9) {
+        const keyMap: Record<string, number> = { '1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5, '7': 6, '8': 7, '9': 8, '0': 9 }
+        const idx = keyMap[e.key]
+        if (idx !== undefined && idx < secoesNavegacao.length) {
           e.preventDefault()
-          setSecaoAtiva(secoesNavegacao[num - 1].secao)
+          setSecaoAtiva(secoesNavegacao[idx].secao)
         }
       }
     }
@@ -182,6 +190,7 @@ function SecaoConteudo({ secao }: { secao: SecaoAtiva }) {
     case 'conversas': return <Conversas />
     case 'habilidades': return <Habilidades />
     case 'agentes': return <Agentes />
+    case 'orquestrador': return <Orquestrador />
     case 'memorias': return <Memorias />
     case 'ferramentas': return <Ferramentas />
     case 'conexoes-mcp': return <ConexoesMCP />
@@ -199,6 +208,7 @@ function ConteudoPrincipal() {
     conversas: 'Conversas',
     habilidades: 'Habilidades',
     agentes: 'Agentes',
+    orquestrador: 'Orquestrador',
     memorias: 'Memórias',
     ferramentas: 'Ferramentas',
     'conexoes-mcp': 'Conexões MCP',
@@ -211,6 +221,7 @@ function ConteudoPrincipal() {
     conversas: <MessageSquare className="size-3.5 text-sky-500" />,
     habilidades: <Sparkles className="size-3.5 text-emerald-500" />,
     agentes: <Bot className="size-3.5 text-teal-500" />,
+    orquestrador: <Cpu className="size-3.5 text-violet-500" />,
     memorias: <Brain className="size-3.5 text-purple-500" />,
     ferramentas: <Wrench className="size-3.5 text-orange-500" />,
     'conexoes-mcp': <Link className="size-3.5 text-indigo-500" />,

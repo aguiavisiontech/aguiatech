@@ -62,11 +62,12 @@ const itensNavegacao: { secao: SecaoAtiva; rotulo: string; icone: React.ElementT
   { secao: 'conversas', rotulo: 'Conversas', icone: MessageSquare, atalho: 'Ctrl+2', corIcone: 'text-sky-500' },
   { secao: 'habilidades', rotulo: 'Habilidades', icone: Sparkles, atalho: 'Ctrl+3', corIcone: 'text-emerald-500' },
   { secao: 'agentes', rotulo: 'Agentes', icone: Bot, atalho: 'Ctrl+4', corIcone: 'text-teal-500' },
-  { secao: 'memorias', rotulo: 'Memórias', icone: Brain, atalho: 'Ctrl+5', corIcone: 'text-purple-500' },
-  { secao: 'ferramentas', rotulo: 'Ferramentas', icone: Wrench, atalho: 'Ctrl+6', corIcone: 'text-orange-500' },
-  { secao: 'conexoes-mcp', rotulo: 'Conexões MCP', icone: Link, atalho: 'Ctrl+7', corIcone: 'text-indigo-500' },
-  { secao: 'agendador', rotulo: 'Agendador', icone: Clock, atalho: 'Ctrl+8', corIcone: 'text-rose-500' },
-  { secao: 'config', rotulo: 'Configurações', icone: Settings, atalho: 'Ctrl+9', corIcone: 'text-slate-500' },
+  { secao: 'orquestrador', rotulo: 'Orquestrador', icone: Cpu, atalho: 'Ctrl+5', corIcone: 'text-violet-500' },
+  { secao: 'memorias', rotulo: 'Memórias', icone: Brain, atalho: 'Ctrl+6', corIcone: 'text-purple-500' },
+  { secao: 'ferramentas', rotulo: 'Ferramentas', icone: Wrench, atalho: 'Ctrl+7', corIcone: 'text-orange-500' },
+  { secao: 'conexoes-mcp', rotulo: 'Conexões MCP', icone: Link, atalho: 'Ctrl+8', corIcone: 'text-indigo-500' },
+  { secao: 'agendador', rotulo: 'Agendador', icone: Clock, atalho: 'Ctrl+9', corIcone: 'text-rose-500' },
+  { secao: 'config', rotulo: 'Configurações', icone: Settings, atalho: 'Ctrl+0', corIcone: 'text-slate-500' },
 ]
 
 export function BarraLateral() {
