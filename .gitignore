@@ -52,3 +52,16 @@ prompt
 server.log
 # Skills directory
 /skills/
+
+# Database
+db/*.db
+db/*.db-journal
+
+# Uploads
+public/uploads/
+
+# Agent context
+agent-ctx/
+
+# Worklog
+worklog.md

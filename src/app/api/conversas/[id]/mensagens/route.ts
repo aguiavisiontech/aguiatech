@@ -138,6 +138,7 @@ export async function POST(
     let conteudoMensagem = body.conteudo
     let buscaWebAtiva = false
     let resultadosBusca: ResultadoBusca[] = []
+    const anexosData = body.anexos // Array of attachment objects from upload API
 
     // Detectar prefixo [BUSCA WEB]
     if (conteudoMensagem.startsWith('[BUSCA WEB]')) {
@@ -151,6 +152,7 @@ export async function POST(
         conversaId: id,
         papel: 'usuario',
         conteudo: conteudoMensagem,
+        anexos: anexosData ? JSON.stringify(anexosData) : undefined,
       },
     })
 
@@ -217,6 +219,19 @@ export async function POST(
       resultadosBusca = buscaResultado.resultados
     }
 
+    // Check if there are image attachments that need VLM analysis
+    const temImagemAnexo = anexosData && anexosData.some((a: { tipoArquivo: string }) => a.tipoArquivo === 'imagem')
+    const temDocumentoAnexo = anexosData && anexosData.some((a: { tipoArquivo: string }) => a.tipoArquivo === 'documento' || a.tipoArquivo === 'codigo')
+
+    // Add file context to messages if present
+    let contextoArquivos = ''
+    if (temDocumentoAnexo) {
+      const docs = anexosData.filter((a: { tipoArquivo: string }) => a.tipoArquivo === 'documento' || a.tipoArquivo === 'codigo')
+      contextoArquivos = '\n\n## 📎 Arquivos Anexados\n\n' + docs.map((d: { nome: string; textoConteudo: string | null }) =>
+        `### Arquivo: ${d.nome}\n\`\`\`\n${d.textoConteudo || '[Conteúdo não disponível]'}\n\`\`\``
+      ).join('\n\n')
+    }
+
     // Buscar histórico de mensagens recentes
     const mensagensAnteriores = await db.mensagem.findMany({
       where: { conversaId: id },
@@ -233,7 +248,7 @@ export async function POST(
       : ''
     mensagensLLM.push({
       role: 'system' as const,
-      content: `${agente.personalidade}${contextoHabilidades}${contextoMemorias}${contextoBuscaWeb}${instrBuscaWeb}\n\nSeu nome é ${agente.nome}. Você é um assistente avançado com acesso a ferramentas. Responda de forma útil, clara e em português brasileiro. Use markdown quando apropriado. Mantenha-se no personagem durante toda a conversa.`,
+      content: `${agente.personalidade}${contextoHabilidades}${contextoMemorias}${contextoBuscaWeb}${contextoArquivos}${instrBuscaWeb}\n\nSeu nome é ${agente.nome}. Você é um assistente avançado com acesso a ferramentas. Responda de forma útil, clara e em português brasileiro. Use markdown quando apropriado. Mantenha-se no personagem durante toda a conversa.`,
     })
 
     // Adicionar histórico
@@ -305,6 +320,75 @@ export async function POST(
         respostaIA = `Olá! Recebi sua mensagem: "${body.conteudo}". Sou o Aguiatech, seu agente de IA. Como posso ajudar mais?`
         tokensIn = Math.floor(Math.random() * 100) + 50
         tokensOut = Math.floor(Math.random() * 200) + 100
+      }
+    }
+
+    // If there are image attachments, use VLM for vision analysis
+    if (temImagemAnexo && provedor !== 'openrouter') {
+      try {
+        const zai = await ZAI.create()
+        const imagens = anexosData.filter((a: { tipoArquivo: string }) => a.tipoArquivo === 'imagem')
+        const imageContents = imagens.map((img: { base64: string }) => ({
+          type: 'image_url' as const,
+          image_url: { url: img.base64 }
+        }))
+
+        const visionMessages = [
+          {
+            role: 'user' as const,
+            content: [
+              { type: 'text' as const, text: `${agente.personalidade}\n\nAnalise esta(s) imagem(ns) e responda em português brasileiro. ${conteudoMensagem}` },
+              ...imageContents
+            ]
+          }
+        ]
+
+        const visionResponse = await zai.chat.completions.createVision({
+          messages: visionMessages,
+          thinking: { type: 'disabled' },
+        })
+
+        respostaIA = visionResponse.choices[0]?.message?.content || respostaIA
+        tokensIn = visionResponse.usage?.prompt_tokens ?? tokensIn
+        tokensOut = visionResponse.usage?.completion_tokens ?? tokensOut
+      } catch (vlmError) {
+        console.warn('VLM falhou, usando resposta do LLM:', vlmError)
+      }
+    } else if (temImagemAnexo) {
+      // For OpenRouter, add image context as description
+      try {
+        const zai = await ZAI.create()
+        const imagens = anexosData.filter((a: { tipoArquivo: string }) => a.tipoArquivo === 'imagem')
+        const imageContents = imagens.map((img: { base64: string }) => ({
+          type: 'image_url' as const,
+          image_url: { url: img.base64 }
+        }))
+
+        const visionMessages = [
+          {
+            role: 'user' as const,
+            content: [
+              { type: 'text' as const, text: `Descreva esta(s) imagem(ns) de forma detalhada em português brasileiro. ${conteudoMensagem}` },
+              ...imageContents
+            ]
+          }
+        ]
+
+        const visionResponse = await zai.chat.completions.createVision({
+          messages: visionMessages,
+          thinking: { type: 'disabled' },
+        })
+
+        const descricaoImagem = visionResponse.choices[0]?.message?.content || ''
+        if (descricaoImagem) {
+          // Add image description to the last user message for OpenRouter context
+          mensagensLLM[mensagensLLM.length - 1] = {
+            ...mensagensLLM[mensagensLLM.length - 1],
+            content: `${mensagensLLM[mensagensLLM.length - 1].content}\n\n[Imagem anexada - descrição: ${descricaoImagem}]`
+          }
+        }
+      } catch (vlmError) {
+        console.warn('VLM description failed:', vlmError)
       }
     }
 

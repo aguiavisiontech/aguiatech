@@ -56,6 +56,7 @@ model Mensagem {
   ferramenta     String?
   ferramentaArgs String?
   ferramentaRes  String?
+  anexos         String?   // JSON string with array of attachments: [{nome, tipo, tamanho, url, base64?}]
   tokensIn       Int?
   tokensOut      Int?
   modelo         String?
