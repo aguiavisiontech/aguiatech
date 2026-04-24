@@ -1,0 +1,173 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Agente {
+  id                String   @id @default(cuid())
+  nome              String   @default("Aguiatech")
+  descricao         String?
+  avatar            String?
+  modelo            String   @default("meta-llama/llama-3.3-70b-instruct:free")
+  provedorModelo    String   @default("openrouter")
+  personalidade     String   @default("Sou o Aguiatech, um agente de IA brasileiro inteligente e prestativo. Estou aqui para ajudar com qualquer tarefa!")
+  diretorioTrabalho String   @default("~/aguiatech")
+  temperatura       Float    @default(0.7)
+  maxTokens         Int      @default(4096)
+  categoria         String   @default("geral")
+  cor               String   @default("amber")
+  habilidadeIds     String?
+  ferramentaIds     String?
+  ativo             Boolean  @default(true)
+  ehTemplate        Boolean  @default(false)
+  conversasTotal    Int      @default(0)
+  ultimaConversa    DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  conversasRel      Conversa[]
+}
+
+model Conversa {
+  id              String   @id @default(cuid())
+  titulo          String   @default("Nova Conversa")
+  plataforma      String   @default("web")
+  sessionId       String?
+  agenteId        String?
+  ativa           Boolean  @default(true)
+  comprimida      Boolean  @default(false)
+  totalTokensIn   Int      @default(0)
+  totalTokensOut  Int      @default(0)
+  totalMensagens  Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  mensagens       Mensagem[]
+  agente          Agente?  @relation(fields: [agenteId], references: [id], onDelete: SetNull)
+}
+
+model Mensagem {
+  id             String    @id @default(cuid())
+  conversaId     String
+  papel          String    @default("usuario")
+  conteudo       String
+  ferramenta     String?
+  ferramentaArgs String?
+  ferramentaRes  String?
+  tokensIn       Int?
+  tokensOut      Int?
+  modelo         String?
+  tempoResposta  Float?
+  createdAt      DateTime  @default(now())
+  conversa       Conversa  @relation(fields: [conversaId], references: [id], onDelete: Cascade)
+}
+
+model Habilidade {
+  id              String   @id @default(cuid())
+  nome            String
+  categoria       String   @default("geral")
+  descricao       String?
+  conteudo        String
+  parametros      String?
+  versao          Int      @default(1)
+  usoContagem     Int      @default(0)
+  taxaSucesso     Float    @default(0.0)
+  criadaPorAgente Boolean  @default(false)
+  ativa           Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  execucoes       ExecucaoHabilidade[]
+}
+
+model ExecucaoHabilidade {
+  id             String      @id @default(cuid())
+  habilidadeId   String
+  entrada        String
+  saida          String?
+  sucesso        Boolean     @default(false)
+  duracao        Float?
+  feedback       String?
+  createdAt      DateTime    @default(now())
+  habilidade     Habilidade  @relation(fields: [habilidadeId], references: [id], onDelete: Cascade)
+}
+
+model Memoria {
+  id           String   @id @default(cuid())
+  tipo         String   @default("fato")
+  categoria    String   @default("geral")
+  conteudo     String
+  importancia  Float    @default(0.5)
+  origem       String?
+  ativa        Boolean  @default(true)
+  acessos      Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model PerfilUsuario {
+  id              String   @id @default(cuid())
+  identificador   String   @unique
+  nome            String?
+  preferencias    String?
+  estiloComunic   String?
+  nivelTecnico    String   @default("intermediario")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Ferramenta {
+  id                String   @id @default(cuid())
+  nome              String   @unique
+  categoria         String   @default("nucleo")
+  descricao         String
+  toolset           String?
+  parametros        String?
+  requerAprovacao   Boolean  @default(false)
+  ativa             Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model TarefaAgendada {
+  id              String   @id @default(cuid())
+  nome            String
+  descricao       String?
+  cron            String
+  ativa           Boolean  @default(true)
+  ultimaExecucao  DateTime?
+  proximaExecucao DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  historico       HistoricoTarefa[]
+}
+
+model HistoricoTarefa {
+  id          String         @id @default(cuid())
+  tarefaId    String
+  status      String         @default("pendente")
+  resultado   String?
+  erro        String?
+  duracao     Float?
+  executadaEm DateTime       @default(now())
+  tarefa      TarefaAgendada @relation(fields: [tarefaId], references: [id], onDelete: Cascade)
+}
+
+model ConexaoMCP {
+  id        String   @id @default(cuid())
+  nome      String
+  tipo      String   @default("stdio")
+  comando   String?
+  args      String?
+  url       String?
+  ativa     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Config {
+  id    String @id @default(cuid())
+  chave String @unique
+  valor String
+}
