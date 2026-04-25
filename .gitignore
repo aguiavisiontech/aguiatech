@@ -65,3 +65,6 @@ agent-ctx/
 
 # Worklog
 worklog.md
+
+# Logs PM2
+logs/
