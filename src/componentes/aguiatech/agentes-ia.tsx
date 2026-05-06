@@ -364,7 +364,7 @@ export function AgentesIA() {
               Agentes IA
             </h2>
             <Badge variant="outline" className="text-[9px] h-4 px-1.5 font-mono">
-              Karpathy P1-P5
+              Aguiavisiontech P1-P5
             </Badge>
           </div>
 
@@ -559,7 +559,7 @@ export function AgentesIA() {
                   <h3 className={`text-xl font-bold ${agente.accentClass}`}>{agente.nome}</h3>
                   <p className="text-sm text-muted-foreground mt-1 max-w-sm">{agente.tag}</p>
                   <p className="text-xs text-muted-foreground mt-2">
-                    Guiado pelos 5 princípios Karpathy
+                    Guiado pelos 5 princípios Aguiavisiontech
                   </p>
                 </div>
 
@@ -762,7 +762,7 @@ export function AgentesIA() {
             </Button>
           </div>
           <p className="text-[10px] text-muted-foreground text-center mt-1.5">
-            Enter para enviar • Shift+Enter para nova linha • Princípios Karpathy ativos
+            Enter para enviar • Shift+Enter para nova linha • Princípios Aguiavisiontech ativos
           </p>
         </div>
       </div>

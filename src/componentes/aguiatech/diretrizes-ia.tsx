@@ -407,7 +407,7 @@ export function DiretrizesIA() {
                 <span className="text-3xl">🎓</span>
                 <div>
                   <h1 className="text-2xl font-bold">Diretrizes de IA</h1>
-                  <p className="text-violet-100 text-sm">Karpathy Skills — Fork Cognitivo pt-BR</p>
+                  <p className="text-violet-100 text-sm">Aguiavisiontech Skills — Fork Cognitivo pt-BR</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -427,7 +427,7 @@ export function DiretrizesIA() {
             </div>
             <p className="text-violet-100 text-xs max-w-xl">
               Cinco princípios comportamentais para reduzir erros comuns de LLMs em codificação.
-              Baseado nas observações de Andrej Karpathy, traduzido e expandido com o 5º princípio
+              Baseado nas observações de Aguiavisiontech, traduzido e expandido com o 5º princípio
               inédito: <strong>Comunicação Contínua</strong>.
             </p>
           </div>
@@ -597,7 +597,7 @@ export function DiretrizesIA() {
               </div>
               <h3 className="text-lg font-semibold mb-2">Nenhuma diretriz carregada</h3>
               <p className="text-sm text-muted-foreground mb-4 max-w-md">
-                Carregue os 5 princípios Karpathy Skills para começar a acompanhar
+                Carregue os 5 princípios Aguiavisiontech Skills para começar a acompanhar
                 a aderência do seu agente de IA às melhores práticas de codificação.
               </p>
               <Button
@@ -617,7 +617,7 @@ export function DiretrizesIA() {
         )}
       </div>
 
-      {/* Karpathy Quote */}
+      {/* Aguiavisiontech Quote */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -635,13 +635,13 @@ export function DiretrizesIA() {
                   Não diga o que fazer; dê critérios de sucesso e observe.&quot;
                 </blockquote>
                 <p className="text-xs text-muted-foreground mt-2">
-                  — Andrej Karpathy
+                  — Aguiavisiontech
                 </p>
                 <Separator className="my-3" />
                 <p className="text-[10px] text-muted-foreground">
                   Fork cognitivo de{' '}
                   <span className="font-medium text-violet-600 dark:text-violet-400">
-                    forrestchang/andrej-karpathy-skills
+                    aguiavisiontech/aguiavisiontech-skills
                   </span>
                   , traduzido e expandido para o ecossistema brasileiro com o 5º princípio inédito.
                 </p>
