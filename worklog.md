@@ -88,3 +88,33 @@ Stage Summary:
 - Dynamic forms per type (n8n URL+API key, WhatsApp phone+tokens, Telegram bot+chat, etc.)
 - Connection testing, detail view, logs viewer all functional
 - Full aguiatech app operational with sidebar navigation
+
+---
+Task ID: 7
+Agent: main (cron review)
+Task: QA testing, bug fixes, styling enhancements, and new features
+
+Work Log:
+- Performed visual QA using agent-browser: homepage, MCP section, dialog forms, tab navigation, demo data
+- No runtime errors or console errors found
+- Fixed next.config.ts missing `allowedDevOrigins` for cross-origin preview (added .space-z.ai, localhost)
+- Updated /api/estatisticas to include `totalIntegracoesMCP` and `integracoesConectadas` counts
+- Updated barra-lateral.tsx to show MCP integrations count badge in sidebar
+- Enhanced ConexoesMCP component with:
+  - 5 rich gradient stat cards (Total, Conectadas, Ferramentas, Webhooks, Erros)
+  - Bulk actions toolbar (Conectar Todos, Desconectar Todos)
+  - Auto-refresh polling every 30 seconds with visual indicator
+  - Professional empty state with quick-start cards for n8n/WhatsApp/Telegram
+  - Custom scrollbar CSS for overflow containers
+  - Header gradient changed to amber/orange (brand colors, not indigo/blue)
+  - Shimmer animation for loading states
+- Added custom-scrollbar and animate-shimmer CSS classes to globals.css
+- Lint passes with zero errors
+- Dev server running correctly, all API routes returning 200
+
+Stage Summary:
+- QA complete: no errors in production build or runtime
+- Styling significantly enhanced: gradient stats, bulk actions, auto-refresh, better empty states
+- 2 new features: bulk actions toolbar and auto-refresh polling
+- MCP integration count now visible in sidebar navigation
+- All changes verified via agent-browser screenshots and error checking

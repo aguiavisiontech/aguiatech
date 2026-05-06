@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -29,6 +29,8 @@ import {
   X,
   Tag,
   Database,
+  Play,
+  Square,
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -69,6 +71,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 
 // ===== Types =====
@@ -1164,6 +1167,14 @@ export function ConexoesMCP() {
   const [detalhesId, setDetalhesId] = useState<string | null>(null)
   const [deletarId, setDeletarId] = useState<string | null>(null)
 
+  // Auto-refresh polling every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ['integracoes-mcp'] })
+    }, 30000)
+    return () => clearInterval(interval)
+  }, [queryClient])
+
   // Fetch integrations
   const { data: integracoes, isLoading } = useQuery<IntegracaoMCP[]>({
     queryKey: ['integracoes-mcp'],
@@ -1240,6 +1251,7 @@ export function ConexoesMCP() {
       conectadas: all.filter(i => i.conectado).length,
       ferramentas: all.reduce((acc, i) => acc + (i._count?.ferramentas ?? 0), 0),
       webhooks: all.filter(i => i.webhookUrl && i.ativa).length,
+      erros: all.filter(i => i.status === 'erro').length,
     }
   }, [integracoes])
 
@@ -1266,17 +1278,77 @@ export function ConexoesMCP() {
     setEditando(null)
   }
 
+  const handleConectarTodos = useCallback(() => {
+    const all = integracoes ?? []
+    const desconectados = all.filter(i => !i.conectado)
+    Promise.all(desconectados.map(i => conectar.mutateAsync(i.id)))
+      .then(() => toast.success(`${desconectados.length} integrações conectadas!`))
+      .catch(() => toast.error('Erro ao conectar algumas integrações'))
+  }, [integracoes, conectar])
+
+  const handleDesconectarTodos = useCallback(() => {
+    const all = integracoes ?? []
+    const conectados = all.filter(i => i.conectado)
+    Promise.all(conectados.map(i => desconectar.mutateAsync(i.id)))
+      .then(() => toast.success(`${conectados.length} integrações desconectadas!`))
+      .catch(() => toast.error('Erro ao desconectar algumas integrações'))
+  }, [integracoes, desconectar])
+
+  // Stat cards configuration
+  const statCards = useMemo(() => [
+    {
+      label: 'Total',
+      value: isLoading ? '-' : stats.total,
+      icon: Cable,
+      gradient: 'from-amber-500 to-orange-500',
+      iconBg: 'bg-amber-100 dark:bg-amber-900/30',
+      iconColor: 'text-amber-600 dark:text-amber-400',
+    },
+    {
+      label: 'Conectadas',
+      value: isLoading ? '-' : stats.conectadas,
+      icon: Wifi,
+      gradient: 'from-emerald-500 to-teal-500',
+      iconBg: 'bg-emerald-100 dark:bg-emerald-900/30',
+      iconColor: 'text-emerald-600 dark:text-emerald-400',
+    },
+    {
+      label: 'Ferramentas',
+      value: isLoading ? '-' : stats.ferramentas,
+      icon: Wrench,
+      gradient: 'from-violet-500 to-purple-500',
+      iconBg: 'bg-violet-100 dark:bg-violet-900/30',
+      iconColor: 'text-violet-600 dark:text-violet-400',
+    },
+    {
+      label: 'Webhooks',
+      value: isLoading ? '-' : stats.webhooks,
+      icon: Globe,
+      gradient: 'from-rose-500 to-pink-500',
+      iconBg: 'bg-rose-100 dark:bg-rose-900/30',
+      iconColor: 'text-rose-600 dark:text-rose-400',
+    },
+    {
+      label: 'Erros',
+      value: isLoading ? '-' : stats.erros,
+      icon: AlertTriangle,
+      gradient: 'from-red-500 to-orange-500',
+      iconBg: 'bg-red-100 dark:bg-red-900/30',
+      iconColor: 'text-red-600 dark:text-red-400',
+    },
+  ], [stats, isLoading])
+
   return (
     <div className="space-y-6 p-4 md:p-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-600 via-orange-600 to-amber-700 p-5 text-white dark:from-amber-700 dark:via-orange-700 dark:to-amber-800"
+        className="relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 p-5 text-white dark:from-amber-600 dark:via-orange-600 dark:to-red-600"
       >
-        <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
-        <div className="absolute top-1/2 right-1/4 w-16 h-16 bg-white/5 rounded-full" />
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-300/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-orange-300/10 rounded-full translate-y-1/2 -translate-x-1/2" />
+        <div className="absolute top-1/2 right-1/4 w-16 h-16 bg-red-300/10 rounded-full" />
         <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-lg bg-white/20 flex items-center justify-center shadow-md backdrop-blur-sm">
@@ -1284,10 +1356,15 @@ export function ConexoesMCP() {
             </div>
             <div>
               <h1 className="text-xl font-bold">Integrações MCP</h1>
-              <p className="text-amber-200 text-sm">Conecte n8n, WhatsApp Business, Telegram e servidores MCP</p>
+              <p className="text-amber-100 text-sm">Conecte n8n, WhatsApp Business, Telegram e servidores MCP</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {/* Auto-refresh indicator */}
+            <div className="flex items-center gap-1.5 text-amber-100 text-[10px] mr-2">
+              <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Atualização automática
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -1309,54 +1386,71 @@ export function ConexoesMCP() {
         </div>
       </motion.div>
 
-      {/* Stats Bar */}
+      {/* Enhanced Stats Cards */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="flex items-center gap-2.5 p-3 rounded-lg bg-muted/50 border border-border/50">
-            <div className="size-8 rounded-md bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-              <Cable className="size-4 text-amber-600 dark:text-amber-400" />
-            </div>
-            <div>
-              <p className="text-lg font-bold">{isLoading ? '-' : stats.total}</p>
-              <p className="text-[10px] text-muted-foreground">Total integrações</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2.5 p-3 rounded-lg bg-muted/50 border border-border/50">
-            <div className="size-8 rounded-md bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-              <Wifi className="size-4 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div>
-              <p className="text-lg font-bold flex items-center gap-1.5">
-                {isLoading ? '-' : stats.conectadas}
-                {stats.conectadas > 0 && <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />}
-              </p>
-              <p className="text-[10px] text-muted-foreground">Conectadas</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2.5 p-3 rounded-lg bg-muted/50 border border-border/50">
-            <div className="size-8 rounded-md bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-              <Wrench className="size-4 text-orange-600 dark:text-orange-400" />
-            </div>
-            <div>
-              <p className="text-lg font-bold">{isLoading ? '-' : stats.ferramentas}</p>
-              <p className="text-[10px] text-muted-foreground">Ferramentas disponíveis</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2.5 p-3 rounded-lg bg-muted/50 border border-border/50">
-            <div className="size-8 rounded-md bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center">
-              <Activity className="size-4 text-cyan-600 dark:text-cyan-400" />
-            </div>
-            <div>
-              <p className="text-lg font-bold">{isLoading ? '-' : stats.webhooks}</p>
-              <p className="text-[10px] text-muted-foreground">Webhooks ativos</p>
-            </div>
-          </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {statCards.map((card) => {
+            const Icon = card.icon
+            return (
+              <div
+                key={card.label}
+                className="relative overflow-hidden rounded-xl bg-gradient-to-br shadow-sm p-4"
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-10`} />
+                <div className="relative z-10 flex items-center gap-3">
+                  <div className={`size-10 rounded-lg ${card.iconBg} flex items-center justify-center shadow-sm shrink-0`}>
+                    <Icon className={`size-5 ${card.iconColor}`} />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold leading-none">{card.value}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{card.label}</p>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </motion.div>
+
+      {/* Bulk Actions Toolbar */}
+      {(integracoes?.length ?? 0) > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+        >
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 text-xs h-8"
+              onClick={handleConectarTodos}
+              disabled={conectar.isPending}
+            >
+              <Play className="size-3" />
+              Conectar Todos
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 text-xs h-8"
+              onClick={handleDesconectarTodos}
+              disabled={desconectar.isPending}
+            >
+              <Square className="size-3" />
+              Desconectar Todos
+            </Button>
+            <Separator orientation="vertical" className="h-5" />
+            <span className="text-[10px] text-muted-foreground">
+              {integracoes?.length ?? 0} integrações
+            </span>
+          </div>
+        </motion.div>
+      )}
 
       {/* Tabs */}
       <motion.div
@@ -1426,23 +1520,91 @@ export function ConexoesMCP() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                 >
-                  <Card className="border-dashed border-2">
-                    <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                      <div className="relative mb-4">
-                        <div className="size-20 rounded-full bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
-                          <Cable className="size-10 text-amber-400 dark:text-amber-500" />
+                  {busca ? (
+                    <Card className="border-dashed border-2">
+                      <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                        <div className="relative mb-4">
+                          <div className="size-20 rounded-full bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
+                            <Search className="size-10 text-amber-400 dark:text-amber-500" />
+                          </div>
                         </div>
-                        <div className="absolute -bottom-1 -right-1 size-7 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center border-2 border-background">
-                          <Plus className="size-3.5 text-orange-600 dark:text-orange-400" />
+                        <p className="font-medium text-foreground">Nenhuma integração encontrada</p>
+                        <p className="text-xs mt-1 max-w-xs text-center">
+                          Tente ajustar os termos de busca
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <Card className="border-dashed border-2">
+                      <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                        {/* Large illustration area */}
+                        <div className="relative mb-6">
+                          <div className="size-24 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 flex items-center justify-center shadow-inner">
+                            <Cable className="size-12 text-amber-400 dark:text-amber-500" />
+                          </div>
+                          <div className="absolute -bottom-1 -right-1 size-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center border-2 border-background shadow-sm">
+                            <Plus className="size-4 text-orange-600 dark:text-orange-400" />
+                          </div>
                         </div>
-                      </div>
-                      <p className="font-medium text-foreground">Nenhuma integração encontrada</p>
-                      <p className="text-xs mt-1 max-w-xs text-center">
-                        {busca
-                          ? 'Tente ajustar os termos de busca'
-                          : 'Adicione uma integração MCP para expandir as capacidades do agente'}
-                      </p>
-                      {!busca && (
+                        <p className="font-semibold text-lg text-foreground">Nenhuma integração configurada</p>
+                        <p className="text-sm mt-1 max-w-md text-center">
+                          Conecte n8n, WhatsApp Business, Telegram ou servidores MCP para expandir as capacidades do agente
+                        </p>
+
+                        {/* Quick-start cards */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6 w-full max-w-lg">
+                          {/* n8n quick-start */}
+                          <div className="flex flex-col items-center gap-2 p-4 rounded-lg border border-amber-200/50 dark:border-amber-800/30 bg-amber-50/30 dark:bg-amber-900/10 hover:shadow-md transition-shadow">
+                            <div className="size-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                              <Zap className="size-5 text-amber-600 dark:text-amber-400" />
+                            </div>
+                            <span className="text-xs font-medium">n8n</span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1 text-[10px] h-6 border-amber-300 hover:bg-amber-50 dark:border-amber-700 dark:hover:bg-amber-900/20"
+                              onClick={() => { setEditando(null); setDialogoCriar(true) }}
+                            >
+                              <Plus className="size-2.5" />
+                              Criar
+                            </Button>
+                          </div>
+
+                          {/* WhatsApp quick-start */}
+                          <div className="flex flex-col items-center gap-2 p-4 rounded-lg border border-emerald-200/50 dark:border-emerald-800/30 bg-emerald-50/30 dark:bg-emerald-900/10 hover:shadow-md transition-shadow">
+                            <div className="size-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                              <MessageCircle className="size-5 text-emerald-600 dark:text-emerald-400" />
+                            </div>
+                            <span className="text-xs font-medium">WhatsApp</span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1 text-[10px] h-6 border-emerald-300 hover:bg-emerald-50 dark:border-emerald-700 dark:hover:bg-emerald-900/20"
+                              onClick={() => { setEditando(null); setDialogoCriar(true) }}
+                            >
+                              <Plus className="size-2.5" />
+                              Criar
+                            </Button>
+                          </div>
+
+                          {/* Telegram quick-start */}
+                          <div className="flex flex-col items-center gap-2 p-4 rounded-lg border border-sky-200/50 dark:border-sky-800/30 bg-sky-50/30 dark:bg-sky-900/10 hover:shadow-md transition-shadow">
+                            <div className="size-10 rounded-lg bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center">
+                              <Send className="size-5 text-sky-600 dark:text-sky-400" />
+                            </div>
+                            <span className="text-xs font-medium">Telegram</span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1 text-[10px] h-6 border-sky-300 hover:bg-sky-50 dark:border-sky-700 dark:hover:bg-sky-900/20"
+                              onClick={() => { setEditando(null); setDialogoCriar(true) }}
+                            >
+                              <Plus className="size-2.5" />
+                              Criar
+                            </Button>
+                          </div>
+                        </div>
+
                         <div className="flex gap-2 mt-4">
                           <Button
                             variant="outline"
@@ -1453,17 +1615,10 @@ export function ConexoesMCP() {
                             <Database className="size-4" />
                             Carregar Demo
                           </Button>
-                          <Button
-                            className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white gap-2"
-                            onClick={() => { setEditando(null); setDialogoCriar(true) }}
-                          >
-                            <Plus className="size-4" />
-                            Criar Integração
-                          </Button>
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  )}
                 </motion.div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -7,12 +7,16 @@ export async function GET() {
     const totalHabilidades = await db.habilidade.count()
     const totalMemorias = await db.memoria.count()
     const ferramentasAtivas = await db.ferramenta.count({ where: { ativa: true } })
+    const totalIntegracoesMCP = await db.integracaoMCP.count()
+    const integracoesConectadas = await db.integracaoMCP.count({ where: { conectado: true } })
 
     return NextResponse.json({
       totalConversas,
       totalHabilidades,
       totalMemorias,
       ferramentasAtivas,
+      totalIntegracoesMCP,
+      integracoesConectadas,
     })
   } catch (error) {
     console.error('Erro ao buscar estatísticas:', error)
@@ -21,6 +25,8 @@ export async function GET() {
       totalHabilidades: 0,
       totalMemorias: 0,
       ferramentasAtivas: 0,
+      totalIntegracoesMCP: 0,
+      integracoesConectadas: 0,
     })
   }
 }

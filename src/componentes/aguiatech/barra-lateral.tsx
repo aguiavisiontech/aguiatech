@@ -46,6 +46,8 @@ interface Estatisticas {
   totalHabilidades: number
   totalMemorias: number
   ferramentasAtivas: number
+  totalIntegracoesMCP: number
+  integracoesConectadas: number
 }
 
 interface Agente {
@@ -90,6 +92,7 @@ export function BarraLateral() {
     habilidades: estatisticas?.totalHabilidades ?? 0,
     memorias: estatisticas?.totalMemorias ?? 0,
     ferramentas: estatisticas?.ferramentasAtivas ?? 0,
+    'conexoes-mcp': estatisticas?.totalIntegracoesMCP ?? 0,
   }
 
   const modeloNome = agente?.modelo ?? ''
