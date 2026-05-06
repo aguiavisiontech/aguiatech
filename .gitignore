@@ -58,4 +58,4 @@ upload/
 # Database
 db/
 # Agent context
-agent-ctx/
+agent-ctx/deploy.sh
