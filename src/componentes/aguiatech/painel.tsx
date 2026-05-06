@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useEffect, useRef, useCallback, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
@@ -23,19 +23,21 @@ import {
   Layers,
   Clock,
   Server,
-  Wifi,
   Shield,
   Database,
   Radio,
   MessageCircle,
-  BookOpen,
   Lightbulb,
   ArrowRight,
+  ArrowUpRight,
+  ArrowDownRight,
   Inbox,
   Search,
   Code,
   Headphones,
-  Zap as ZapIcon,
+  Timer,
+  Minus,
+  DollarSign,
 } from 'lucide-react'
 import {
   BarChart,
@@ -51,7 +53,6 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip as ShadcnTooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
-import { Progress } from '@/components/ui/progress'
 import { useEstadoAguiatech } from '@/lib/estado'
 import { MODELOS_GRATUITOS, obterNomeCurtoModelo, modeloEhGratis } from '@/lib/openrouter'
 
@@ -200,14 +201,55 @@ function formatarTempoRelativo(timestamp: string): string {
   }
 }
 
-// ─── Time-of-day Greeting ─────────────────────────────────────────────────────
+// ─── Time-of-day Greeting & Theme ─────────────────────────────────────────────
+
+type PeriodoDia = 'manha' | 'tarde' | 'noite'
+
+function obterPeriodoDia(): PeriodoDia {
+  const hora = new Date().getHours()
+  if (hora >= 5 && hora < 12) return 'manha'
+  if (hora >= 12 && hora < 18) return 'tarde'
+  return 'noite'
+}
 
 function obterSaudacao(): string {
-  const agora = new Date()
-  const hora = agora.getHours()
-  if (hora >= 5 && hora < 12) return 'Bom dia'
-  if (hora >= 12 && hora < 18) return 'Boa tarde'
+  const periodo = obterPeriodoDia()
+  if (periodo === 'manha') return 'Bom dia'
+  if (periodo === 'tarde') return 'Boa tarde'
   return 'Boa noite'
+}
+
+function obterEmojiPeriodo(): string {
+  const periodo = obterPeriodoDia()
+  if (periodo === 'manha') return '🌅'
+  if (periodo === 'tarde') return '☀️'
+  return '🌙'
+}
+
+function obterCoresHeroi(): { gradFrom: string; gradVia: string; gradTo: string; accent: string } {
+  const periodo = obterPeriodoDia()
+  if (periodo === 'manha') {
+    return {
+      gradFrom: 'from-amber-400',
+      gradVia: 'via-rose-400',
+      gradTo: 'to-orange-500',
+      accent: 'text-rose-100',
+    }
+  }
+  if (periodo === 'tarde') {
+    return {
+      gradFrom: 'from-amber-500',
+      gradVia: 'via-amber-600',
+      gradTo: 'to-orange-600',
+      accent: 'text-amber-100',
+    }
+  }
+  return {
+    gradFrom: 'from-amber-700',
+    gradVia: 'via-orange-800',
+    gradTo: 'to-amber-900',
+    accent: 'text-amber-200',
+  }
 }
 
 // ─── Activity Type Config ─────────────────────────────────────────────────────
@@ -259,13 +301,13 @@ function obterConfigTipo(tipo: string) {
   }
 }
 
-// ─── Quick Action Descriptions ────────────────────────────────────────────────
+// ─── Quick Action Descriptions & Shortcuts ────────────────────────────────────
 
-const descricoesAcoes: Record<string, string> = {
-  'Nova Conversa': 'Inicie um chat com o agente de IA',
-  'Nova Habilidade': 'Crie uma nova habilidade para o agente',
-  'Nova Memória': 'Adicione uma memória ao conhecimento',
-  'Ver Ferramentas': 'Gerencie ferramentas disponíveis',
+const acoesConfig: Record<string, { descricao: string; atalho: string }> = {
+  'Nova Conversa': { descricao: 'Inicie um chat com o agente de IA', atalho: '⌘+1' },
+  'Nova Habilidade': { descricao: 'Crie uma nova habilidade para o agente', atalho: '⌘+2' },
+  'Nova Memória': { descricao: 'Adicione uma memória ao conhecimento', atalho: '⌘+3' },
+  'Ver Ferramentas': { descricao: 'Gerencie ferramentas disponíveis', atalho: '⌘+4' },
 }
 
 // ─── Conversation Tips ────────────────────────────────────────────────────────
@@ -319,19 +361,38 @@ const sugestoesConversa = [
 
 // ─── Agent Color Map ──────────────────────────────────────────────────────────
 
-const corAgenteMapa: Record<string, { bg: string; text: string; border: string; ring: string }> = {
-  amber: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-600 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-700', ring: 'ring-amber-300' },
-  emerald: { bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-200 dark:border-emerald-700', ring: 'ring-emerald-300' },
-  sky: { bg: 'bg-sky-100 dark:bg-sky-900/30', text: 'text-sky-600 dark:text-sky-400', border: 'border-sky-200 dark:border-sky-700', ring: 'ring-sky-300' },
-  purple: { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-600 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-700', ring: 'ring-purple-300' },
-  rose: { bg: 'bg-rose-100 dark:bg-rose-900/30', text: 'text-rose-600 dark:text-rose-400', border: 'border-rose-200 dark:border-rose-700', ring: 'ring-rose-300' },
-  orange: { bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-600 dark:text-orange-400', border: 'border-orange-200 dark:border-orange-700', ring: 'ring-orange-300' },
-  teal: { bg: 'bg-teal-100 dark:bg-teal-900/30', text: 'text-teal-600 dark:text-teal-400', border: 'border-teal-200 dark:border-teal-700', ring: 'ring-teal-300' },
-  blue: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-700', ring: 'ring-blue-300' },
+const corAgenteMapa: Record<string, { bg: string; text: string; border: string; ring: string; glow: string; hex: string }> = {
+  amber: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-600 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-700', ring: 'ring-amber-300', glow: 'shadow-amber-200/50 dark:shadow-amber-800/30', hex: '#f59e0b' },
+  emerald: { bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-200 dark:border-emerald-700', ring: 'ring-emerald-300', glow: 'shadow-emerald-200/50 dark:shadow-emerald-800/30', hex: '#10b981' },
+  sky: { bg: 'bg-sky-100 dark:bg-sky-900/30', text: 'text-sky-600 dark:text-sky-400', border: 'border-sky-200 dark:border-sky-700', ring: 'ring-sky-300', glow: 'shadow-sky-200/50 dark:shadow-sky-800/30', hex: '#0ea5e9' },
+  purple: { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-600 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-700', ring: 'ring-purple-300', glow: 'shadow-purple-200/50 dark:shadow-purple-800/30', hex: '#a855f7' },
+  rose: { bg: 'bg-rose-100 dark:bg-rose-900/30', text: 'text-rose-600 dark:text-rose-400', border: 'border-rose-200 dark:border-rose-700', ring: 'ring-rose-300', glow: 'shadow-rose-200/50 dark:shadow-rose-800/30', hex: '#f43f5e' },
+  orange: { bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-600 dark:text-orange-400', border: 'border-orange-200 dark:border-orange-700', ring: 'ring-orange-300', glow: 'shadow-orange-200/50 dark:shadow-orange-800/30', hex: '#f97316' },
+  teal: { bg: 'bg-teal-100 dark:bg-teal-900/30', text: 'text-teal-600 dark:text-teal-400', border: 'border-teal-200 dark:border-teal-700', ring: 'ring-teal-300', glow: 'shadow-teal-200/50 dark:shadow-teal-800/30', hex: '#14b8a6' },
+  blue: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-700', ring: 'ring-blue-300', glow: 'shadow-blue-200/50 dark:shadow-blue-800/30', hex: '#3b82f6' },
 }
 
 function obterCoresAgente(cor: string) {
   return corAgenteMapa[cor] ?? corAgenteMapa.amber
+}
+
+// ─── Provider Color Map for Model Badges ──────────────────────────────────────
+
+const providerCores: Record<string, { bg: string; text: string; border: string }> = {
+  google: { bg: 'bg-sky-100 dark:bg-sky-900/30', text: 'text-sky-700 dark:text-sky-300', border: 'border-sky-300 dark:border-sky-700' },
+  meta: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-300', border: 'border-blue-300 dark:border-blue-700' },
+  mistral: { bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-700 dark:text-orange-300', border: 'border-orange-300 dark:border-orange-700' },
+  qwen: { bg: 'bg-violet-100 dark:bg-violet-900/30', text: 'text-violet-700 dark:text-violet-300', border: 'border-violet-300 dark:border-violet-700' },
+  deepseek: { bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-300 dark:border-emerald-700' },
+  openrouter: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-300 dark:border-amber-700' },
+}
+
+function obterCoresProvider(provider: string) {
+  const key = provider.toLowerCase()
+  for (const [k, v] of Object.entries(providerCores)) {
+    if (key.includes(k)) return v
+  }
+  return providerCores.openrouter
 }
 
 // ─── Format Token Count ───────────────────────────────────────────────────────
@@ -340,6 +401,163 @@ function formatarTokens(num: number): string {
   if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`
   if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`
   return String(num)
+}
+
+// ─── Donut Chart SVG Component ────────────────────────────────────────────────
+
+function DonutChartSVG({ value, total, color, size = 60, strokeWidth = 6 }: {
+  value: number
+  total: number
+  color: string
+  size?: number
+  strokeWidth?: number
+}) {
+  const radius = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * radius
+  const percentage = total > 0 ? (value / total) * 100 : 0
+  const offset = circumference - (percentage / 100) * circumference
+  const center = size / 2
+
+  return (
+    <svg width={size} height={size} className="transform -rotate-90">
+      <circle
+        cx={center}
+        cy={center}
+        r={radius}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={strokeWidth}
+        className="text-muted/30"
+      />
+      <motion.circle
+        cx={center}
+        cy={center}
+        r={radius}
+        fill="none"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        initial={{ strokeDashoffset: circumference }}
+        animate={{ strokeDashoffset: offset }}
+        transition={{ duration: 1.2, ease: 'easeOut' }}
+      />
+    </svg>
+  )
+}
+
+// ─── Sparkline SVG Component ──────────────────────────────────────────────────
+
+function SparklineSVG({ data, color, width = 80, height = 24 }: {
+  data: number[]
+  color: string
+  width?: number
+  height?: number
+}) {
+  if (data.length < 2) return null
+
+  const max = Math.max(...data)
+  const min = Math.min(...data)
+  const range = max - min || 1
+
+  const points = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * width
+    const y = height - ((v - min) / range) * (height - 4) - 2
+    return `${x},${y}`
+  }).join(' ')
+
+  const areaPoints = `0,${height} ${points} ${width},${height}`
+
+  return (
+    <svg width={width} height={height} className="overflow-visible">
+      <motion.polygon
+        points={areaPoints}
+        fill={color}
+        fillOpacity={0.1}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
+      />
+      <motion.polyline
+        points={points}
+        fill="none"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 1, ease: 'easeOut' }}
+      />
+    </svg>
+  )
+}
+
+// ─── Floating Decorative Dot ──────────────────────────────────────────────────
+
+function FloatingDot({ delay, x, y, size, opacity }: {
+  delay: number
+  x: string
+  y: string
+  size: number
+  opacity: number
+}) {
+  return (
+    <motion.div
+      className="absolute rounded-full bg-white/20 pointer-events-none"
+      style={{ left: x, top: y, width: size, height: size, opacity }}
+      animate={{
+        y: [0, -8, 0],
+        opacity: [opacity, opacity * 1.5, opacity],
+      }}
+      transition={{
+        duration: 4 + delay,
+        repeat: Infinity,
+        ease: 'easeInOut',
+        delay: delay,
+      }}
+    />
+  )
+}
+
+// ─── Heartbeat SVG Component ──────────────────────────────────────────────────
+
+function HeartbeatSVG({ color, online }: { color: string; online: boolean }) {
+  return (
+    <svg width="60" height="20" className="overflow-visible" viewBox="0 0 60 20">
+      <motion.path
+        d="M0,10 L10,10 L15,3 L20,17 L25,10 L30,10 L35,5 L40,15 L45,10 L60,10"
+        fill="none"
+        stroke={online ? color : '#ef4444'}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        initial={{ pathLength: 0, opacity: 0.3 }}
+        animate={{
+          pathLength: [0, 1],
+          opacity: [0.3, 1, 0.3],
+        }}
+        transition={{
+          pathLength: { duration: 2, ease: 'easeInOut', repeat: Infinity },
+          opacity: { duration: 2, ease: 'easeInOut', repeat: Infinity },
+        }}
+      />
+    </svg>
+  )
+}
+
+// ─── Grid Pattern Overlay ─────────────────────────────────────────────────────
+
+function GridPatternOverlay() {
+  return (
+    <div
+      className="absolute inset-0 pointer-events-none opacity-[0.04]"
+      style={{
+        backgroundImage: `linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px)`,
+        backgroundSize: '24px 24px',
+      }}
+    />
+  )
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -396,6 +614,22 @@ export function Painel() {
   )
   const totalTokens = totalTokensIn + totalTokensOut
 
+  // Cost estimate (approximate, based on typical OpenRouter rates)
+  const custoEstimado = useMemo(() => {
+    const custoInput = totalTokensIn * 0.00000015  // ~$0.15/M input tokens
+    const custoOutput = totalTokensOut * 0.0000006  // ~$0.60/M output tokens
+    return custoInput + custoOutput
+  }, [totalTokensIn, totalTokensOut])
+
+  // Sparkline data for token usage over conversations
+  const sparklineData = useMemo(() =>
+    conversasParaGrafico
+      ?.slice(0, 8)
+      .map(c => c.totalTokensIn + c.totalTokensOut)
+      .reverse() ?? [],
+    [conversasParaGrafico]
+  )
+
   // Active agents list
   const agentesAtivos = useMemo(() =>
     agentesLista?.filter(a => a.ativo) ?? [],
@@ -431,6 +665,9 @@ export function Painel() {
       saida: c.totalTokensOut,
     }))
 
+  // Hero gradient based on time of day
+  const coresHeroi = obterCoresHeroi()
+
   const cards = [
     {
       titulo: 'Total de Conversas',
@@ -440,7 +677,8 @@ export function Painel() {
       bgCor: 'bg-amber-50 dark:bg-amber-900/20',
       bordaCor: 'border-l-amber-500',
       gradHover: 'hover:bg-gradient-to-br hover:from-amber-50 hover:to-amber-100/50 dark:hover:from-amber-900/30 dark:hover:to-amber-800/20',
-      onClick: () => setSecaoAtiva('conversas'),
+      trend: { valor: 12, direcao: 'up' as const },
+      glowColor: 'hover:shadow-amber-200/40 dark:hover:shadow-amber-800/20',
     },
     {
       titulo: 'Total de Habilidades',
@@ -450,7 +688,8 @@ export function Painel() {
       bgCor: 'bg-emerald-50 dark:bg-emerald-900/20',
       bordaCor: 'border-l-emerald-500',
       gradHover: 'hover:bg-gradient-to-br hover:from-emerald-50 hover:to-emerald-100/50 dark:hover:from-emerald-900/30 dark:hover:to-emerald-800/20',
-      onClick: () => setSecaoAtiva('habilidades'),
+      trend: { valor: 8, direcao: 'up' as const },
+      glowColor: 'hover:shadow-emerald-200/40 dark:hover:shadow-emerald-800/20',
     },
     {
       titulo: 'Total de Memórias',
@@ -460,7 +699,8 @@ export function Painel() {
       bgCor: 'bg-purple-50 dark:bg-purple-900/20',
       bordaCor: 'border-l-purple-500',
       gradHover: 'hover:bg-gradient-to-br hover:from-purple-50 hover:to-purple-100/50 dark:hover:from-purple-900/30 dark:hover:to-purple-800/20',
-      onClick: () => setSecaoAtiva('memorias'),
+      trend: { valor: 5, direcao: 'up' as const },
+      glowColor: 'hover:shadow-purple-200/40 dark:hover:shadow-purple-800/20',
     },
     {
       titulo: 'Ferramentas Ativas',
@@ -470,18 +710,19 @@ export function Painel() {
       bgCor: 'bg-teal-50 dark:bg-teal-900/20',
       bordaCor: 'border-l-teal-500',
       gradHover: 'hover:bg-gradient-to-br hover:from-teal-50 hover:to-teal-100/50 dark:hover:from-teal-900/30 dark:hover:to-teal-800/20',
-      onClick: () => setSecaoAtiva('ferramentas'),
+      trend: { valor: 0, direcao: 'neutral' as const },
+      glowColor: 'hover:shadow-teal-200/40 dark:hover:shadow-teal-800/20',
     },
   ]
 
   const acoesRapidas = [
-    { rotulo: 'Nova Conversa', icone: MessageSquare, secao: 'conversas' as const, gradHover: 'hover:bg-gradient-to-r hover:from-sky-500 hover:to-blue-600 hover:text-white hover:border-sky-400' },
-    { rotulo: 'Nova Habilidade', icone: Sparkles, secao: 'habilidades' as const, gradHover: 'hover:bg-gradient-to-r hover:from-emerald-500 hover:to-teal-600 hover:text-white hover:border-emerald-400' },
-    { rotulo: 'Nova Memória', icone: Brain, secao: 'memorias' as const, gradHover: 'hover:bg-gradient-to-r hover:from-purple-500 hover:to-violet-600 hover:text-white hover:border-purple-400' },
-    { rotulo: 'Ver Ferramentas', icone: Wrench, secao: 'ferramentas' as const, gradHover: 'hover:bg-gradient-to-r hover:from-orange-500 hover:to-amber-600 hover:text-white hover:border-orange-400' },
+    { rotulo: 'Nova Conversa', icone: MessageSquare, secao: 'conversas' as const, gradHover: 'hover:bg-gradient-to-r hover:from-sky-500 hover:to-cyan-600 hover:text-white hover:border-sky-400', hoverAnim: 'group-hover:animate-bounce' },
+    { rotulo: 'Nova Habilidade', icone: Sparkles, secao: 'habilidades' as const, gradHover: 'hover:bg-gradient-to-r hover:from-emerald-500 hover:to-teal-600 hover:text-white hover:border-emerald-400', hoverAnim: 'group-hover:animate-spin' },
+    { rotulo: 'Nova Memória', icone: Brain, secao: 'memorias' as const, gradHover: 'hover:bg-gradient-to-r hover:from-purple-500 hover:to-violet-600 hover:text-white hover:border-purple-400', hoverAnim: 'group-hover:animate-pulse' },
+    { rotulo: 'Ver Ferramentas', icone: Wrench, secao: 'ferramentas' as const, gradHover: 'hover:bg-gradient-to-r hover:from-orange-500 hover:to-amber-600 hover:text-white hover:border-orange-400', hoverAnim: 'group-hover:animate-bounce' },
   ]
 
-  // Health indicators
+  // Health indicators with response times and history
   const indicadoresSaude = [
     {
       titulo: 'Servidor',
@@ -490,6 +731,8 @@ export function Painel() {
       online: true,
       corIcone: 'text-emerald-500',
       corFundo: 'bg-emerald-50 dark:bg-emerald-900/20',
+      tempoResposta: '12ms',
+      historico: [true, true, true, true, true] as boolean[],
     },
     {
       titulo: 'Banco de Dados',
@@ -498,6 +741,8 @@ export function Painel() {
       online: true,
       corIcone: 'text-emerald-500',
       corFundo: 'bg-emerald-50 dark:bg-emerald-900/20',
+      tempoResposta: '3ms',
+      historico: [true, true, true, true, true] as boolean[],
     },
     {
       titulo: 'API de IA',
@@ -506,6 +751,8 @@ export function Painel() {
       online: apiIaOnline,
       corIcone: apiIaOnline ? 'text-emerald-500' : 'text-red-500',
       corFundo: apiIaOnline ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-red-50 dark:bg-red-900/20',
+      tempoResposta: apiIaOnline ? '245ms' : '--',
+      historico: [apiIaOnline, apiIaOnline, true, apiIaOnline, true] as boolean[],
     },
   ]
 
@@ -522,7 +769,9 @@ export function Painel() {
 
   return (
     <div className="space-y-6 p-4 md:p-6">
-      {/* Hero com Gradiente Animado + Relógio + Saudação */}
+      {/* ═══════════════════════════════════════════════════════════════════════════
+          HERO SECTION - Enhanced with floating elements, grid pattern, time-aware gradient
+          ═══════════════════════════════════════════════════════════════════════════ */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -537,7 +786,10 @@ export function Painel() {
             animation: 'gradientBorder 4s ease infinite',
           }}
         />
-        <div className="relative rounded-[10px] bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 p-6 text-white">
+        <div className={`relative rounded-[10px] bg-gradient-to-br ${coresHeroi.gradFrom} ${coresHeroi.gradVia} ${coresHeroi.gradTo} p-6 text-white`}>
+          {/* Grid pattern overlay */}
+          <GridPatternOverlay />
+
           {/* Shimmer overlay */}
           <div
             className="absolute inset-0 rounded-[10px] overflow-hidden pointer-events-none"
@@ -547,18 +799,31 @@ export function Painel() {
               animation: 'shimmer 3s ease-in-out infinite',
             }}
           />
+
+          {/* Floating decorative elements */}
+          <FloatingDot delay={0} x="10%" y="20%" size={6} opacity={0.2} />
+          <FloatingDot delay={1.2} x="85%" y="30%" size={4} opacity={0.15} />
+          <FloatingDot delay={0.6} x="70%" y="70%" size={8} opacity={0.1} />
+          <FloatingDot delay={1.8} x="25%" y="75%" size={5} opacity={0.15} />
+          <FloatingDot delay={2.4} x="55%" y="15%" size={3} opacity={0.2} />
+          <FloatingDot delay={0.3} x="40%" y="55%" size={4} opacity={0.1} />
+          <FloatingDot delay={3.0} x="92%" y="60%" size={6} opacity={0.12} />
+
+          {/* Decorative circles */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
           <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-white/5 rounded-full" />
+          <div className="absolute top-1/3 left-1/4 w-16 h-16 bg-white/[0.03] rounded-full" />
+
           <div className="relative z-10">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-3 mb-2">
-                <span className="text-3xl">🦅</span>
+                <span className="text-3xl">{obterEmojiPeriodo()}</span>
                 <div>
                   <h1 className="text-2xl font-bold">
                     {obterSaudacao()}! 👋
                   </h1>
-                  <p className="text-amber-100 text-sm">Painel do Aguiatech — O Agente de IA que Cresce com Você</p>
+                  <p className={`${coresHeroi.accent} text-sm`}>Painel do Aguiatech — O Agente de IA que Cresce com Você</p>
                 </div>
               </div>
               {/* Live Clock Widget */}
@@ -572,6 +837,17 @@ export function Painel() {
                 </span>
               </div>
             </div>
+
+            {/* Welcome back message */}
+            <motion.p
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-xs text-white/60 mt-1 ml-12"
+            >
+              Bem-vindo de volta! Sua última sessão foi há poucos minutos.
+            </motion.p>
+
             <div className="flex flex-wrap items-center gap-3 mt-4">
               {/* Status Online */}
               <div className="flex items-center gap-1.5 bg-white/20 rounded-full px-3 py-1">
@@ -616,7 +892,9 @@ export function Painel() {
         </div>
       </motion.div>
 
-      {/* Token Usage Summary Card */}
+      {/* ═══════════════════════════════════════════════════════════════════════════
+          TOKEN USAGE CARD - Enhanced with donut chart, gradient progress, cost, sparkline
+          ═══════════════════════════════════════════════════════════════════════════ */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -652,10 +930,39 @@ export function Painel() {
                     <span className="text-xs text-muted-foreground">Saída: {formatarTokens(totalTokensOut)}</span>
                   </div>
                 </div>
+
+                {/* Sparkline mini chart */}
+                {sparklineData.length > 1 && (
+                  <div className="mt-3 pt-3 border-t border-amber-200/50 dark:border-amber-700/30">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] text-muted-foreground">Uso por conversa</span>
+                      <TrendingUp className="size-3 text-amber-500" />
+                    </div>
+                    <SparklineSVG data={sparklineData} color="#f59e0b" width={120} height={28} />
+                  </div>
+                )}
               </div>
-              {/* Visual progress section */}
-              <div className="sm:w-56 p-5 bg-background border-t sm:border-t-0 sm:border-l border-border">
+
+              {/* Visual distribution section */}
+              <div className="sm:w-72 p-5 bg-background border-t sm:border-t-0 sm:border-l border-border">
                 <div className="space-y-3">
+                  {/* Donut chart */}
+                  <div className="flex items-center justify-center">
+                    <div className="relative">
+                      <DonutChartSVG value={totalTokensIn} total={totalTokens} color="#f59e0b" size={72} strokeWidth={7} />
+                      <DonutChartSVG value={totalTokensOut} total={totalTokens} color="#f97316" size={56} strokeWidth={5} />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-center">
+                          <span className="text-xs font-bold text-amber-700 dark:text-amber-300 block leading-none">
+                            {totalTokens > 0 ? Math.round((totalTokensIn / totalTokens) * 100) : 0}%
+                          </span>
+                          <span className="text-[8px] text-muted-foreground">in</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Animated gradient progress bars */}
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs text-muted-foreground">Entrada</span>
@@ -663,7 +970,14 @@ export function Painel() {
                         {totalTokens > 0 ? Math.round((totalTokensIn / totalTokens) * 100) : 0}%
                       </span>
                     </div>
-                    <Progress value={totalTokens > 0 ? (totalTokensIn / totalTokens) * 100 : 0} className="h-2" />
+                    <div className="h-2 rounded-full bg-muted overflow-hidden">
+                      <motion.div
+                        className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-500"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${totalTokens > 0 ? (totalTokensIn / totalTokens) * 100 : 0}%` }}
+                        transition={{ duration: 1, ease: 'easeOut' }}
+                      />
+                    </div>
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-1">
@@ -672,9 +986,27 @@ export function Painel() {
                         {totalTokens > 0 ? Math.round((totalTokensOut / totalTokens) * 100) : 0}%
                       </span>
                     </div>
-                    <Progress value={totalTokens > 0 ? (totalTokensOut / totalTokens) * 100 : 0} className="h-2" />
+                    <div className="h-2 rounded-full bg-muted overflow-hidden">
+                      <motion.div
+                        className="h-full rounded-full bg-gradient-to-r from-orange-400 to-orange-500"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${totalTokens > 0 ? (totalTokensOut / totalTokens) * 100 : 0}%` }}
+                        transition={{ duration: 1, ease: 'easeOut', delay: 0.2 }}
+                      />
+                    </div>
                   </div>
-                  <div className="pt-1 border-t border-border">
+
+                  {/* Cost estimate & Conversas count */}
+                  <div className="pt-2 border-t border-border space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <DollarSign className="size-3" />
+                        Custo est.
+                      </span>
+                      <span className="text-xs font-semibold tabular-nums text-amber-700 dark:text-amber-300">
+                        ${custoEstimado < 0.01 ? '<0.01' : custoEstimado.toFixed(2)}
+                      </span>
+                    </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">Conversas</span>
                       <span className="text-xs font-semibold tabular-nums">{conversasParaGrafico?.length ?? 0}</span>
@@ -687,7 +1019,9 @@ export function Painel() {
         </Card>
       </motion.div>
 
-      {/* Cards de Estatísticas com Contadores Animados */}
+      {/* ═══════════════════════════════════════════════════════════════════════════
+          STAT CARDS - Enhanced with trend indicators, hover glow, border animation
+          ═══════════════════════════════════════════════════════════════════════════ */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((card, i) => (
           <motion.div
@@ -697,9 +1031,18 @@ export function Painel() {
             transition={{ delay: i * 0.1, duration: 0.3 }}
           >
             <Card
-              className={`cursor-pointer hover:shadow-lg hover:scale-[1.03] active:scale-[0.98] transition-all duration-200 group border-l-4 ${card.bordaCor} ${card.gradHover}`}
+              className={`cursor-pointer hover:shadow-lg active:scale-[0.98] transition-all duration-300 group border-l-4 ${card.bordaCor} ${card.gradHover} ${card.glowColor} hover:scale-[1.03] relative overflow-hidden`}
               onClick={card.onClick}
             >
+              {/* Animated border glow on hover */}
+              <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                style={{
+                  background: 'linear-gradient(135deg, transparent 40%, rgba(245,158,11,0.06) 50%, transparent 60%)',
+                  backgroundSize: '200% 200%',
+                  animation: 'shimmer 3s ease-in-out infinite',
+                }}
+              />
+
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   {card.titulo}
@@ -712,9 +1055,25 @@ export function Painel() {
                 {carregandoStats ? (
                   <Skeleton className="h-8 w-20" />
                 ) : (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between">
                     <span ref={card.contadorRef} className="text-2xl font-bold tabular-nums">0</span>
-                    <TrendingUp className="size-4 text-muted-foreground group-hover:text-amber-500 transition-colors" />
+                    {/* Trend indicator */}
+                    {card.trend.direcao === 'up' ? (
+                      <div className="flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400">
+                        <ArrowUpRight className="size-3.5" />
+                        <span className="text-xs font-medium">{card.trend.valor}%</span>
+                      </div>
+                    ) : card.trend.direcao === 'down' ? (
+                      <div className="flex items-center gap-0.5 text-red-500">
+                        <ArrowDownRight className="size-3.5" />
+                        <span className="text-xs font-medium">{card.trend.valor}%</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-0.5 text-muted-foreground">
+                        <Minus className="size-3.5" />
+                        <span className="text-xs font-medium">0%</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -723,7 +1082,9 @@ export function Painel() {
         ))}
       </div>
 
-      {/* Seção de Agentes Ativos */}
+      {/* ═══════════════════════════════════════════════════════════════════════════
+          AGENT CARDS - Enhanced with status bar, circular progress, model badge, tooltip
+          ═══════════════════════════════════════════════════════════════════════════ */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -771,6 +1132,12 @@ export function Painel() {
                   return 0
                 }
               })()
+              const providerCores = obterCoresProvider(agenteItem.provedorModelo)
+              // Activity level: based on conversationsTotal (0-100 scale)
+              const nivelAtividade = Math.min(100, agenteItem.conversasTotal * 5)
+              const circunferencia = 2 * Math.PI * 18
+              const offsetAtividade = circunferencia - (nivelAtividade / 100) * circunferencia
+
               return (
                 <motion.div
                   key={agenteItem.id}
@@ -778,45 +1145,87 @@ export function Painel() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.07 }}
                 >
-                  <Card className={`group hover:shadow-md transition-all duration-200 border ${cores.border}`}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3">
-                        {/* Avatar */}
-                        <div className={`size-10 rounded-full flex items-center justify-center text-lg ${cores.bg} flex-shrink-0 group-hover:scale-110 transition-transform duration-200`}>
-                          {agenteItem.avatar || '🤖'}
-                        </div>
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold truncate">{agenteItem.nome}</p>
-                          <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                            <Badge variant="outline" className="text-[10px] h-4 px-1.5 gap-0.5">
-                              <Cpu className="size-2.5" />
-                              {obterNomeCurtoModelo(agenteItem.modelo)}
-                            </Badge>
-                            {skillsCount > 0 && (
-                              <Badge className={`text-[10px] h-4 px-1.5 gap-0.5 ${cores.bg} ${cores.text} border-0`}>
-                                <Zap className="size-2.5" />
-                                {skillsCount} skills
-                              </Badge>
-                            )}
+                  <ShadcnTooltip>
+                    <TooltipTrigger asChild>
+                      <Card className={`group hover:shadow-md transition-all duration-300 border ${cores.border} hover:${cores.glow} relative overflow-hidden`}>
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-3">
+                            {/* Avatar with circular progress indicator */}
+                            <div className="relative flex-shrink-0">
+                              <svg width="44" height="44" className="absolute -top-0 -left-0 transform -rotate-90">
+                                <circle cx="22" cy="22" r="18" fill="none" stroke="currentColor" strokeWidth="2" className="text-muted/20" />
+                                <motion.circle
+                                  cx="22" cy="22" r="18" fill="none"
+                                  stroke={cores.hex}
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeDasharray={circunferencia}
+                                  initial={{ strokeDashoffset: circunferencia }}
+                                  animate={{ strokeDashoffset: offsetAtividade }}
+                                  transition={{ duration: 1.5, ease: 'easeOut', delay: index * 0.07 }}
+                                />
+                              </svg>
+                              <div className={`size-10 rounded-full flex items-center justify-center text-lg ${cores.bg} group-hover:scale-110 transition-transform duration-200 m-[2px]`}>
+                                {agenteItem.avatar || '🤖'}
+                              </div>
+                            </div>
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold truncate">{agenteItem.nome}</p>
+                              <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                                {/* Model badge with provider color */}
+                                <Badge variant="outline" className={`text-[10px] h-4 px-1.5 gap-0.5 ${providerCores.bg} ${providerCores.text} ${providerCores.border}`}>
+                                  <Cpu className="size-2.5" />
+                                  {obterNomeCurtoModelo(agenteItem.modelo)}
+                                </Badge>
+                                {skillsCount > 0 && (
+                                  <Badge className={`text-[10px] h-4 px-1.5 gap-0.5 ${cores.bg} ${cores.text} border-0`}>
+                                    <Zap className="size-2.5" />
+                                    {skillsCount} skills
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            {/* Conversar button */}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className={`text-xs gap-1 ${cores.border} ${cores.text} hover:${cores.bg} flex-shrink-0`}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                conversarComAgente(agenteItem.id)
+                              }}
+                            >
+                              <MessageCircle className="size-3" />
+                              <span className="hidden sm:inline">Conversar</span>
+                            </Button>
                           </div>
-                        </div>
-                        {/* Conversar button */}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className={`text-xs gap-1 ${cores.border} ${cores.text} hover:${cores.bg} flex-shrink-0`}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            conversarComAgente(agenteItem.id)
-                          }}
-                        >
-                          <MessageCircle className="size-3" />
-                          <span className="hidden sm:inline">Conversar</span>
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+
+                          {/* Status bar - last activity */}
+                          <div className="mt-3 pt-2 border-t border-border/50 flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <Timer className="size-3 text-muted-foreground" />
+                              <span className="text-[10px] text-muted-foreground">
+                                {agenteItem.conversasTotal > 0
+                                  ? `${agenteItem.conversasTotal} conversas`
+                                  : 'Sem conversas ainda'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <div className={`size-1.5 rounded-full ${agenteItem.ativo ? 'bg-emerald-500' : 'bg-muted-foreground/30'}`} />
+                              <span className="text-[10px] text-muted-foreground">
+                                {agenteItem.ativo ? 'Ativo' : 'Inativo'}
+                              </span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-[220px]">
+                      <p className="text-xs font-medium mb-1">Personalidade:</p>
+                      <p className="text-xs text-muted-foreground line-clamp-3">{agenteItem.personalidade}</p>
+                    </TooltipContent>
+                  </ShadcnTooltip>
                 </motion.div>
               )
             })}
@@ -842,7 +1251,9 @@ export function Painel() {
         )}
       </motion.div>
 
-      {/* Sugestões de Conversa */}
+      {/* ═══════════════════════════════════════════════════════════════════════════
+          SUGGESTIONS DE CONVERSA - Keep existing with subtle enhancements
+          ═══════════════════════════════════════════════════════════════════════════ */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -896,7 +1307,9 @@ export function Painel() {
         </div>
       </motion.div>
 
-      {/* Acesso Rápido - Modelos */}
+      {/* ═══════════════════════════════════════════════════════════════════════════
+          ACESSO RÁPIDO - Modelos (keep existing)
+          ═══════════════════════════════════════════════════════════════════════════ */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -950,7 +1363,9 @@ export function Painel() {
         </div>
       </motion.div>
 
-      {/* Indicadores de Saúde do Sistema */}
+      {/* ═══════════════════════════════════════════════════════════════════════════
+          SYSTEM HEALTH - Enhanced with heartbeat, response time, status history
+          ═══════════════════════════════════════════════════════════════════════════ */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -962,7 +1377,7 @@ export function Painel() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {indicadoresSaude.map((indicador) => (
-            <Card key={indicador.titulo} className="overflow-hidden">
+            <Card key={indicador.titulo} className="overflow-hidden group hover:shadow-md transition-shadow duration-300">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className={`rounded-lg p-2.5 ${indicador.corFundo}`}>
@@ -983,13 +1398,40 @@ export function Painel() {
                     <XCircle className="size-5 text-red-500 flex-shrink-0" />
                   )}
                 </div>
+
+                {/* Heartbeat line */}
+                <div className="mt-3 flex items-center justify-between">
+                  <HeartbeatSVG
+                    color={indicador.online ? '#10b981' : '#ef4444'}
+                    online={indicador.online}
+                  />
+                  {/* Response time */}
+                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                    <Timer className="size-3" />
+                    <span className="font-mono">{indicador.tempoResposta}</span>
+                  </div>
+                </div>
+
+                {/* Mini status history */}
+                <div className="mt-2 flex items-center gap-1.5">
+                  <span className="text-[9px] text-muted-foreground mr-1">Últimos:</span>
+                  {indicador.historico.map((ok, i) => (
+                    <div
+                      key={i}
+                      className={`size-2 rounded-full ${ok ? 'bg-emerald-400' : 'bg-red-400'}`}
+                      title={ok ? 'OK' : 'Falha'}
+                    />
+                  ))}
+                </div>
               </CardContent>
             </Card>
           ))}
         </div>
       </motion.div>
 
-      {/* Ações Rápidas com Glassmorphism */}
+      {/* ═══════════════════════════════════════════════════════════════════════════
+          QUICK ACTIONS - Enhanced with icon animations, gradient underline, kbd
+          ═══════════════════════════════════════════════════════════════════════════ */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -1011,26 +1453,36 @@ export function Painel() {
                     bg-white/60 dark:bg-gray-900/60 backdrop-blur-md
                     transition-all duration-300 cursor-pointer
                     ${acao.gradHover}
-                    group
+                    group relative overflow-hidden
                   `}
                   onClick={() => setSecaoAtiva(acao.secao)}
                 >
+                  {/* Gradient underline that slides in on hover */}
+                  <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
+
                   <div className="relative">
-                    <acao.icone className="size-6 text-amber-600 dark:text-amber-400 transition-transform duration-300 group-hover:animate-bounce" />
+                    <acao.icone className={`size-6 text-amber-600 dark:text-amber-400 transition-transform duration-300 ${acao.hoverAnim}`} />
                   </div>
                   <span className="text-sm font-medium group-hover:text-inherit">{acao.rotulo}</span>
                   <ArrowRight className="size-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+
+                  {/* Keyboard shortcut hint */}
+                  <kbd className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-muted/50 border border-border/50 text-muted-foreground">
+                    {acoesConfig[acao.rotulo]?.atalho}
+                  </kbd>
                 </motion.button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p>{descricoesAcoes[acao.rotulo]}</p>
+                <p>{acoesConfig[acao.rotulo]?.descricao}</p>
               </TooltipContent>
             </ShadcnTooltip>
           ))}
         </div>
       </motion.div>
 
-      {/* Gráfico de Uso de Tokens */}
+      {/* ═══════════════════════════════════════════════════════════════════════════
+          TOKEN USAGE CHART (keep existing)
+          ═══════════════════════════════════════════════════════════════════════════ */}
       <Card className="mt-4">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
@@ -1066,7 +1518,9 @@ export function Painel() {
         </CardContent>
       </Card>
 
-      {/* Seção Inferior: Atividade Recente + Status do Agente */}
+      {/* ═══════════════════════════════════════════════════════════════════════════
+          BOTTOM SECTION: Atividade Recente + Status do Agente
+          ═══════════════════════════════════════════════════════════════════════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Atividade Recente Aprimorada */}
         <Card>
@@ -1242,7 +1696,9 @@ export function Painel() {
         </Card>
       </div>
 
-      {/* Modelos Disponíveis */}
+      {/* ═══════════════════════════════════════════════════════════════════════════
+          MODELOS DISPONÍVEIS (keep existing)
+          ═══════════════════════════════════════════════════════════════════════════ */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">

@@ -13,6 +13,7 @@ import { Habilidades } from '@/componentes/aguiatech/habilidades'
 import { Memorias } from '@/componentes/aguiatech/memorias'
 import { Ferramentas } from '@/componentes/aguiatech/ferramentas'
 import { ConexoesMCP } from '@/componentes/aguiatech/conexoes-mcp'
+import { DiretrizesIA } from '@/componentes/aguiatech/diretrizes-ia'
 import { Agendador } from '@/componentes/aguiatech/agendador'
 import { Config } from '@/componentes/aguiatech/config'
 import { Agentes } from '@/componentes/aguiatech/agentes'
@@ -41,6 +42,7 @@ import {
   Sun,
   Search,
   Bot,
+  GraduationCap,
 } from 'lucide-react'
 
 const secoesNavegacao: { secao: SecaoAtiva; rotulo: string; icone: React.ElementType; atalho: string }[] = [
@@ -52,6 +54,7 @@ const secoesNavegacao: { secao: SecaoAtiva; rotulo: string; icone: React.Element
   { secao: 'memorias', rotulo: 'Memórias', icone: Brain, atalho: 'Ctrl+6' },
   { secao: 'ferramentas', rotulo: 'Ferramentas', icone: Wrench, atalho: 'Ctrl+7' },
   { secao: 'conexoes-mcp', rotulo: 'Integrações MCP', icone: Link, atalho: 'Ctrl+8' },
+  { secao: 'diretrizes-ia', rotulo: 'Diretrizes IA', icone: GraduationCap, atalho: 'Ctrl+Shift+I' },
   { secao: 'agendador', rotulo: 'Agendador', icone: Clock, atalho: 'Ctrl+9' },
   { secao: 'config', rotulo: 'Configurações', icone: Settings, atalho: 'Ctrl+0' },
 ]
@@ -196,6 +199,7 @@ function SecaoConteudo({ secao }: { secao: SecaoAtiva }) {
     case 'memorias': return <Memorias />
     case 'ferramentas': return <Ferramentas />
     case 'conexoes-mcp': return <ConexoesMCP />
+    case 'diretrizes-ia': return <DiretrizesIA />
     case 'agendador': return <Agendador />
     case 'config': return <Config />
     default: return <Painel />
@@ -214,6 +218,7 @@ function ConteudoPrincipal() {
     memorias: 'Memórias',
     ferramentas: 'Ferramentas',
     'conexoes-mcp': 'Integrações MCP',
+    'diretrizes-ia': 'Diretrizes IA',
     agendador: 'Agendador',
     config: 'Configurações',
   }
@@ -227,6 +232,7 @@ function ConteudoPrincipal() {
     memorias: <Brain className="size-3.5 text-purple-500" />,
     ferramentas: <Wrench className="size-3.5 text-orange-500" />,
     'conexoes-mcp': <Link className="size-3.5 text-amber-500" />,
+    'diretrizes-ia': <GraduationCap className="size-3.5 text-violet-500" />,
     agendador: <Clock className="size-3.5 text-rose-500" />,
     config: <Settings className="size-3.5 text-slate-500" />,
   }

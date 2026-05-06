@@ -14,6 +14,7 @@ import {
   Search,
   Cpu,
   Bot,
+  GraduationCap,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useQuery } from '@tanstack/react-query'
@@ -67,6 +68,7 @@ const itensNavegacao: { secao: SecaoAtiva; rotulo: string; icone: React.ElementT
   { secao: 'memorias', rotulo: 'Memórias', icone: Brain, atalho: 'Ctrl+5', corIcone: 'text-purple-500' },
   { secao: 'ferramentas', rotulo: 'Ferramentas', icone: Wrench, atalho: 'Ctrl+6', corIcone: 'text-orange-500' },
   { secao: 'conexoes-mcp', rotulo: 'Integrações MCP', icone: Link, atalho: 'Ctrl+7', corIcone: 'text-amber-500' },
+  { secao: 'diretrizes-ia', rotulo: 'Diretrizes IA', icone: GraduationCap, atalho: 'Ctrl+Shift+I', corIcone: 'text-violet-500' },
   { secao: 'agendador', rotulo: 'Agendador', icone: Clock, atalho: 'Ctrl+8', corIcone: 'text-rose-500' },
   { secao: 'config', rotulo: 'Configurações', icone: Settings, atalho: 'Ctrl+9', corIcone: 'text-slate-500' },
 ]

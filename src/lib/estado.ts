@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-type SecaoAtiva = 'painel' | 'conversas' | 'agentes' | 'habilidades' | 'memorias' | 'ferramentas' | 'conexoes-mcp' | 'agendador' | 'orquestrador' | 'config'
+type SecaoAtiva = 'painel' | 'conversas' | 'agentes' | 'habilidades' | 'memorias' | 'ferramentas' | 'conexoes-mcp' | 'agendador' | 'orquestrador' | 'diretrizes-ia' | 'config'
 
 interface EstadoAguiatech {
   // Navegação

@@ -50,3 +50,36 @@ export async function GET(
     )
   }
 }
+
+// DELETE /api/integracoes-mcp/[id]/logs - Clear all logs for an integration
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+  try {
+    const integracao = await db.integracaoMCP.findUnique({ where: { id } })
+    if (!integracao) {
+      return NextResponse.json(
+        { error: 'Integração não encontrada' },
+        { status: 404 }
+      )
+    }
+
+    const result = await db.logIntegracao.deleteMany({
+      where: { integracaoId: id },
+    })
+
+    return NextResponse.json({
+      success: true,
+      deletedCount: result.count,
+      message: `${result.count} logs removidos com sucesso`,
+    })
+  } catch (error) {
+    console.error('Erro ao limpar logs da integração MCP:', error)
+    return NextResponse.json(
+      { error: 'Erro ao limpar logs' },
+      { status: 500 }
+    )
+  }
+}

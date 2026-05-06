@@ -204,6 +204,37 @@ model FerramentaMCP {
   integracao      IntegracaoMCP @relation(fields: [integracaoId], references: [id], onDelete: Cascade)
 }
 
+model DiretrizIA {
+  id              String   @id @default(cuid())
+  principio       Int      @unique  // 1-5
+  nome            String
+  icone           String   @default("Brain")
+  cor             String   @default("amber")
+  descricao       String
+  detalhes        String?  // JSON string with {pontos: string[], teste: string}
+  ativa           Boolean  @default(true)
+  aderencia       Int      @default(0)  // 0-100 percentage
+  usoContagem     Int      @default(0)
+  observacoes     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  exemplos        ExemploDiretriz[]
+}
+
+model ExemploDiretriz {
+  id           String      @id @default(cuid())
+  diretrizId   Int
+  tipo         String      @default("bom")  // bom, ruim
+  titulo       String
+  descricao    String
+  codigo       String?
+  explicacao   String?
+  ordem        Int         @default(0)
+  ativo        Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  diretriz     DiretrizIA  @relation(fields: [diretrizId], references: [principio], onDelete: Cascade)
+}
+
 model Config {
   id    String @id @default(cuid())
   chave String @unique
