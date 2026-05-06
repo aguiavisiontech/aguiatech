@@ -44,6 +44,7 @@ const CATEGORIAS: CategoriaAtalhos[] = [
     nome: 'Sistema',
     atalhos: [
       { teclas: ['Ctrl', 'Shift', 'I'], descricao: 'Diretrizes IA' },
+      { teclas: ['Ctrl', 'Shift', 'A'], descricao: 'Agentes IA' },
     ],
   },
 ]

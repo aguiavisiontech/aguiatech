@@ -18,6 +18,7 @@ import { Agendador } from '@/componentes/aguiatech/agendador'
 import { Config } from '@/componentes/aguiatech/config'
 import { Agentes } from '@/componentes/aguiatech/agentes'
 import { Orquestrador } from '@/componentes/aguiatech/orquestrador'
+import { AgentesIA } from '@/componentes/aguiatech/agentes-ia'
 import { useEstadoAguiatech, type SecaoAtiva } from '@/lib/estado'
 import { CentroNotificacoes } from '@/componentes/aguiatech/centro-notificacoes'
 import { AtalhosOverlay } from '@/componentes/aguiatech/atalhos-overlay'
@@ -46,6 +47,7 @@ import {
   Bot,
   GraduationCap,
   Bell,
+  Cpu,
 } from 'lucide-react'
 
 const secoesNavegacao: { secao: SecaoAtiva; rotulo: string; icone: React.ElementType; atalho: string }[] = [
@@ -58,8 +60,9 @@ const secoesNavegacao: { secao: SecaoAtiva; rotulo: string; icone: React.Element
   { secao: 'ferramentas', rotulo: 'Ferramentas', icone: Wrench, atalho: 'Ctrl+7' },
   { secao: 'conexoes-mcp', rotulo: 'Integrações MCP', icone: Link, atalho: 'Ctrl+8' },
   { secao: 'diretrizes-ia', rotulo: 'Diretrizes IA', icone: GraduationCap, atalho: 'Ctrl+Shift+I' },
-  { secao: 'agendador', rotulo: 'Agendador', icone: Clock, atalho: 'Ctrl+9' },
-  { secao: 'config', rotulo: 'Configurações', icone: Settings, atalho: 'Ctrl+0' },
+  { secao: 'agentes-ia', rotulo: 'Agentes IA', icone: Cpu, atalho: 'Ctrl+Shift+A' },
+  { secao: 'agendador', rotulo: 'Agendador', icone: Clock, atalho: 'Ctrl+0' },
+  { secao: 'config', rotulo: 'Configurações', icone: Settings, atalho: 'Ctrl+Shift+,' },
 ]
 
 // Page transition animation variants
@@ -185,6 +188,16 @@ function AtalhosGlobais() {
         e.preventDefault()
         setTheme(theme === 'dark' ? 'light' : 'dark')
       }
+      // Ctrl+Shift+A para Agentes IA
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'A') {
+        e.preventDefault()
+        setSecaoAtiva('agentes-ia')
+      }
+      // Ctrl+Shift+I para Diretrizes IA
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'I') {
+        e.preventDefault()
+        setSecaoAtiva('diretrizes-ia')
+      }
       // Ctrl+1-9 para navegação
       if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
         const num = parseInt(e.key)
@@ -245,6 +258,7 @@ function SecaoConteudo({ secao }: { secao: SecaoAtiva }) {
     case 'ferramentas': return <Ferramentas />
     case 'conexoes-mcp': return <ConexoesMCP />
     case 'diretrizes-ia': return <DiretrizesIA />
+    case 'agentes-ia': return <AgentesIA />
     case 'agendador': return <Agendador />
     case 'config': return <Config />
     default: return <Painel />
@@ -265,6 +279,7 @@ function ConteudoPrincipal() {
     ferramentas: 'Ferramentas',
     'conexoes-mcp': 'Integrações MCP',
     'diretrizes-ia': 'Diretrizes IA',
+    'agentes-ia': 'Agentes IA',
     agendador: 'Agendador',
     config: 'Configurações',
   }
@@ -279,6 +294,7 @@ function ConteudoPrincipal() {
     ferramentas: <Wrench className="size-3.5 text-orange-500" />,
     'conexoes-mcp': <Link className="size-3.5 text-amber-500" />,
     'diretrizes-ia': <GraduationCap className="size-3.5 text-violet-500" />,
+    'agentes-ia': <Cpu className="size-3.5 text-emerald-500" />,
     agendador: <Clock className="size-3.5 text-rose-500" />,
     config: <Settings className="size-3.5 text-slate-500" />,
   }
