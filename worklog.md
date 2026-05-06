@@ -302,3 +302,206 @@ Stage Summary:
 4. Add more chart visualizations (recharts) to the dashboard
 5. Implement conversation functionality with actual AI integration
 6. Add responsive design testing for mobile viewports
+
+---
+Task ID: 9-b
+Agent: main
+Task: Add Notification Center and Keyboard Shortcuts Overlay
+
+Work Log:
+- Modified estado.ts: Added Notificacao type, TipoNotificacao type, and 7 new state properties/methods:
+  - notificacoes: Notificacao[] with FIFO limit of 50
+  - notificacoesAbertas / setNotificacoesAbertas for panel visibility
+  - adicionarNotificacao with auto-generated id and createdAt
+  - marcarNotificacaoLida, marcarTodasLidas, limparNotificacoes, removerNotificacao
+  - atalhosAbertos / setAtalhosAbertos for shortcuts overlay
+- Created centro-notificacoes.tsx: Full notification center with:
+  - Slide-out Sheet panel from the right side
+  - Amber/orange gradient header with bell icon and unread count badge
+  - Notifications grouped by time period (Hoje, Ontem, Esta Semana, Mais Antigo)
+  - 5 notification types (info, success, warning, error, system) with distinct colors and icons
+  - Type-specific colored left border (amber, emerald, yellow, red, slate)
+  - "Marcar todas como lidas" and "Limpar todas" (with confirmation) action buttons
+  - Individual notification click-to-read and dismiss (X button)
+  - Framer Motion animations for item entry/exit
+  - Empty state with bell icon
+  - BotaoNotificacao exported component for reuse
+- Created atalhos-overlay.tsx: Keyboard shortcuts overlay with:
+  - Dialog-based centered overlay with backdrop blur
+  - Amber/orange gradient header with keyboard icon
+  - Two-column layout grouping shortcuts by category (Navegação, Ações, Sistema)
+  - Styled kbd elements with amber gradient background
+  - Category headers with amber underline
+  - Hover effects on shortcut rows
+  - Footer with "Press ? or Esc to close" message
+  - Esc key to close
+- Modified page.tsx: Integrated new features:
+  - Added Bell icon import and notification bell button in ConteudoPrincipal header (with unread count badge)
+  - Added CentroNotificacoes and AtalhosOverlay components to Home render
+  - Added NotificacoesSeed component that generates 7 demo notifications on first load
+  - Added "?" and "Ctrl+/" keyboard shortcuts in AtalhosGlobais to toggle shortcuts overlay
+  - Smart "?" detection: only triggers outside input/textarea/contentEditable elements
+- Modified barra-lateral.tsx: Added notification bell in sidebar footer:
+  - New BotaoSinoNotificacao component with Bell icon, unread count badge, and text label
+  - Positioned before theme toggle button in sidebar footer
+  - Adapts to collapsed sidebar state (icon only when collapsed, full button with badge when expanded)
+  - Amber-themed badge for unread count
+- Fixed lint error: Removed useEffect for resetting confirmation state in centro-notificacoes.tsx, moved logic to onOpenChange callback
+- Removed unused BotaoNotificacao import from page.tsx
+- Lint passes with zero errors
+
+Stage Summary:
+- Notification Center: Full-featured slide-out panel with type-colored notifications, time grouping, read/unread tracking, dismiss/clear actions
+- Keyboard Shortcuts Overlay: Beautiful dialog with amber gradient, two-column layout, styled kbd elements, categorized shortcuts
+- Both features integrated into header bar and sidebar footer with notification count badges
+- Demo notifications auto-seeded on first load for immediate visual feedback
+- All amber/orange brand colors maintained (no indigo/blue as primary)
+- Zero lint errors, TypeScript strict mode compliant
+
+---
+Task ID: 9-a
+Agent: frontend-styling-expert
+Task: Dramatically improve Orquestrador and Ferramentas UI styling
+
+Work Log:
+- Enhanced globals.css with 20+ new CSS keyframes, utility classes, and patterns:
+  - gradient-shimmer: animated gradient border shimmer (amber-to-orange spectrum)
+  - rotate-gradient: rotating gradient border for final result card
+  - particle-burst: confetti/particle burst with CSS custom properties for direction
+  - glow-ring-pulse: pulsing amber glow ring for running agent cards
+  - speed-lines: horizontal speed lines animation for executing agents
+  - flow-line-dash: SVG animated dashed flow line between agent steps
+  - typing-cursor: blinking cursor for empty code input
+  - border-glow-appear: amber border glow that fades on result card appearance
+  - orb-glow: pulsing glowing orb for hero section background
+  - search-magnify: magnifying glass subtle animation for search focus
+  - pill-shimmer: shimmer effect on category pill hover
+  - progress-ring-fill: SVG progress ring stroke animation
+  - hero-grid-pattern: subtle grid pattern overlay for hero sections
+  - input-gradient-border: gradient left border on input card
+  - timeline-bar-gradient: gradient bar for agent timeline
+  - confidence-badge-high/medium/low: color-coded confidence score badges
+  - card-gradient-header-{amber,red,sky,green,emerald,teal,orange,purple,slate}: per-agent gradient headers
+  - stat-card-gradient-border: gradient border using CSS mask for ferramentas stat cards
+  - animate-progress-ring: CSS animation for SVG progress rings
+
+- Enhanced orquestrador.tsx with comprehensive visual polish:
+  **Hero Section:**
+  - Replaced violet/indigo with amber/orange brand colors throughout
+  - Added animated gradient border shimmer around hero
+  - Added hero-grid-pattern overlay for subtle grid texture
+  - Added animate-orb-glow: pulsing amber orb in center of hero
+  - Added 6 FloatingDot components with staggered animation behind hero text
+  - Added Sparkles icon (replacing Zap in badge)
+  - Gradient text changed from violet-to-amber to amber-via-orange-to-amber
+  - Agent preview cards now have hover effects (scale, y-lift, amber border)
+  - Staggered entry animations on agent preview cards
+
+  **Input Panel:**
+  - Added input-gradient-border: gradient left border (amber-to-orange)
+  - Added dot-grid background pattern on card
+  - Added character count indicator (codigoLength/10000) with color coding (green/amber/red)
+  - Added typing cursor indicator with Type icon when textarea is empty
+  - Replaced violet button with amber-to-orange gradient with shadow glow
+  - "Iniciar Debug" button has amber shadow glow that intensifies on hover
+
+  **Agent Flow:**
+  - Added color-coded timeline bar at top of flow panel (green=completed, amber=running, red=error)
+  - Replaced static ArrowRight with AnimatedFlowLine (SVG animated dashed line with arrow)
+  - Added ProgressRing SVG component around each agent icon showing completion
+  - Added glow-ring-pulse effect on running agent cards
+  - Added speed lines animation on right side of running agents
+  - Added timeline dot indicators (vertical dots) on right side of each card
+  - Strategic analysis colors changed from sky to orange for brand consistency
+  - Progress bar changed to gradient (amber-to-orange) with motion animation
+  - Empty state brain icon now has subtle pulse animation
+  - Badge changed from violet to amber
+
+  **Result Cards (AgentOutputCard):**
+  - Added per-agent gradient header matching agent color (card-gradient-header-{color})
+  - Added confidence score badge (high/medium/low) based on output length
+  - Added border-glow-appear animation when result appears
+  - Expand/collapse uses spring physics (stiffness: 300, damping: 25) instead of linear
+  - Added gradientHeader field to AGENT_COLORS map
+
+  **Final Result Card:**
+  - Added rotating gradient border wrapper (animate-gradient-shimmer)
+  - Added ParticleBurst component: 12 particles with radial explosion animation
+  - Added "Copiar Tudo" button that copies entire solution as markdown
+  - Particle burst auto-hides after 2.5 seconds
+  - Sections now have staggered entry delay (idx * 0.1)
+
+  **New Components:**
+  - ProgressRing: SVG circular progress ring with animated stroke
+  - FloatingDot: Decorative floating dot with Framer Motion animation
+  - AnimatedFlowLine: SVG animated dashed arrow between agent steps
+  - ParticleBurst: Radial particle explosion effect for final result
+
+  **New Imports:**
+  - Sparkles, Type from lucide-react
+  - useMemo from react
+
+- Enhanced ferramentas.tsx with comprehensive visual polish:
+  **Hero Banner:**
+  - Added gradient background overlay (amber-to-orange)
+  - Added hero-grid-pattern overlay
+  - Added animated gradient border shimmer
+  - Added Sparkles badge "Caixa de Ferramentas IA"
+  - Staggered entry animation on entire hero
+
+  **Stat Cards:**
+  - Replaced single stats bar with 6 animated stat cards in grid
+  - Each card has stat-card-gradient-border (amber gradient mask border)
+  - AnimatedCounter component with cubic easing
+  - Trend indicators (ArrowUpRight/ArrowDownRight/Minus)
+  - Gradient icon backgrounds per category
+  - Hover lift + scale animation
+  - stat-number-glow text shadow effect
+  - Staggered entry animations
+
+  **Search:**
+  - Added searchFocused state for visual feedback
+  - Magnifying glass scales up and turns amber on focus
+  - Added animate-search-magnify when search is active
+  - Clear button uses Framer Motion scale animation
+
+  **Category Pills:**
+  - Added gradient colors per category (from-amber-500 to-orange-600, etc.)
+  - Active state uses gradient background matching category
+  - Added pill-shimmer animation on hover
+  - Count badges change style when active (bg-white/20 vs bg-muted)
+  - Staggered entry animations
+  - Changed experimental icon from Search to TestTube
+
+  **Card Hover Effects:**
+  - Added categoriaHoverBorder map for per-category hover border colors
+  - Cards lift on hover (whileHover: y: -3)
+  - Changed experimental from purple to orange (brand consistency)
+  - Parameters expand/collapse uses spring physics
+
+  **Skeleton Loading:**
+  - Added animate-shimmer overlay on skeleton cards
+
+  **Empty State:**
+  - Added rich illustration: large Wrench icon in amber container + Search badge
+  - Conditional message: shows search term when filtering, else shows "Carregar Padrão"
+  - Framer Motion scale animation on empty state appearance
+  - Button dynamically shows "Limpar Busca" or "Carregar Padrão"
+
+  **New Imports:**
+  - Sparkles, ArrowUpRight, ArrowDownRight, Minus, Layers, Package, TestTube
+
+  **New Components:**
+  - AnimatedCounter: Animated number counter with cubic easing via requestAnimationFrame
+
+- Lint passes with zero errors on all modified files
+- Pre-existing TypeScript errors in other files confirmed unrelated to changes
+
+Stage Summary:
+- Orquestrador completely restyled: violet→amber/orange brand, animated hero with orb/dots/grid, gradient input panel with char count, animated agent flow with progress rings/timeline bar, confidence scores on results, particle burst on final result, rotating gradient border
+- Ferramentas dramatically enhanced: hero banner with gradient, 6 animated stat cards, magnifying glass animation, category pills with gradient colors and shimmer, card hover effects per category, shimmer skeletons, rich empty state
+- 20+ new CSS animations and utility classes added to globals.css
+- 5 new sub-components: ProgressRing, FloatingDot, AnimatedFlowLine, ParticleBurst, AnimatedCounter
+- All amber/orange brand colors maintained (no indigo/blue as primary)
+- All existing functionality preserved, 'use client' directives kept
+- TypeScript strict mode compliant, zero new lint errors

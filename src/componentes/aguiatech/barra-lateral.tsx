@@ -15,6 +15,7 @@ import {
   Cpu,
   Bot,
   GraduationCap,
+  Bell,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useQuery } from '@tanstack/react-query'
@@ -72,6 +73,37 @@ const itensNavegacao: { secao: SecaoAtiva; rotulo: string; icone: React.ElementT
   { secao: 'agendador', rotulo: 'Agendador', icone: Clock, atalho: 'Ctrl+8', corIcone: 'text-rose-500' },
   { secao: 'config', rotulo: 'Configurações', icone: Settings, atalho: 'Ctrl+9', corIcone: 'text-slate-500' },
 ]
+
+function BotaoSinoNotificacao() {
+  const { notificacoes, setNotificacoesAbertas } = useEstadoAguiatech()
+  const naoLidas = notificacoes.filter((n) => !n.lida).length
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => setNotificacoesAbertas(true)}
+      className="relative flex-1 justify-start gap-2 text-muted-foreground hover:text-amber-700 dark:hover:text-amber-400 transition-colors duration-200"
+    >
+      <div className="relative">
+        <Bell className="size-4" />
+        {naoLidas > 0 && (
+          <span className="absolute -top-1.5 -right-1.5 size-3.5 rounded-full bg-red-500 text-white text-[7px] font-bold flex items-center justify-center">
+            {naoLidas > 9 ? '9+' : naoLidas}
+          </span>
+        )}
+      </div>
+      <span className="group-data-[collapsible=icon]:hidden">
+        Notificações
+      </span>
+      {naoLidas > 0 && (
+        <Badge className="group-data-[collapsible=icon]:hidden ml-auto bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800 text-[9px] h-4 px-1">
+          {naoLidas}
+        </Badge>
+      )}
+    </Button>
+  )
+}
 
 export function BarraLateral() {
   const { secaoAtiva, setSecaoAtiva, setCommandPaletteAberta } = useEstadoAguiatech()
@@ -261,8 +293,9 @@ export function BarraLateral() {
           </Tooltip>
         </div>
 
-        {/* Theme toggle */}
+        {/* Notification bell + Theme toggle */}
         <div className="flex items-center gap-1 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-2 mt-2">
+          <BotaoSinoNotificacao />
           <Button
             variant="ghost"
             size="sm"

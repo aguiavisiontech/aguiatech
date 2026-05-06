@@ -413,3 +413,317 @@ html {
   height: 4px;
   border-radius: var(--radius) var(--radius) 0 0;
 }
+
+/* ================================
+   Orquestrador & Ferramentas Animations
+   ================================ */
+
+/* Animated gradient border shimmer */
+@keyframes gradient-shimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-gradient-shimmer {
+  background: linear-gradient(90deg, oklch(0.75 0.15 65), oklch(0.65 0.18 50), oklch(0.55 0.16 40), oklch(0.65 0.18 50), oklch(0.75 0.15 65));
+  background-size: 200% 100%;
+  animation: gradient-shimmer 3s ease infinite;
+}
+
+.dark .animate-gradient-shimmer {
+  background: linear-gradient(90deg, oklch(0.60 0.12 70), oklch(0.55 0.15 55), oklch(0.45 0.12 45), oklch(0.55 0.15 55), oklch(0.60 0.12 70));
+  background-size: 200% 100%;
+  animation: gradient-shimmer 3s ease infinite;
+}
+
+/* Rotating gradient border for final result */
+@keyframes rotate-gradient {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-rotate-gradient {
+  animation: rotate-gradient 4s linear infinite;
+}
+
+/* Particle burst / confetti */
+@keyframes particle-burst {
+  0% { transform: scale(0) translate(0, 0); opacity: 1; }
+  50% { opacity: 0.8; }
+  100% { transform: scale(1) translate(var(--tx, 20px), var(--ty, -20px)); opacity: 0; }
+}
+
+.animate-particle-burst {
+  animation: particle-burst 1.2s ease-out forwards;
+}
+
+/* Pulsing glow ring */
+@keyframes glow-ring-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 oklch(0.75 0.15 65 / 30%); }
+  50% { box-shadow: 0 0 0 8px oklch(0.75 0.15 65 / 0%); }
+}
+
+.animate-glow-ring {
+  animation: glow-ring-pulse 2s ease-in-out infinite;
+}
+
+/* Speed lines animation */
+@keyframes speed-lines {
+  0% { transform: scaleY(0); opacity: 0; }
+  30% { transform: scaleY(1); opacity: 0.6; }
+  100% { transform: scaleY(0); opacity: 0; }
+}
+
+.animate-speed-lines {
+  animation: speed-lines 1.5s ease-in-out infinite;
+}
+
+/* Animated flow line */
+@keyframes flow-line-dash {
+  to { stroke-dashoffset: -20; }
+}
+
+.animate-flow-line {
+  stroke-dasharray: 6 4;
+  animation: flow-line-dash 1s linear infinite;
+}
+
+/* Typing cursor blink */
+@keyframes typing-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-typing-cursor {
+  animation: typing-cursor 1s step-end infinite;
+}
+
+/* Card border glow on appear */
+@keyframes border-glow-appear {
+  0% { border-color: oklch(0.75 0.15 65 / 60%); box-shadow: 0 0 15px oklch(0.75 0.15 65 / 20%); }
+  100% { border-color: oklch(0.91 0.01 80); box-shadow: none; }
+}
+
+@keyframes border-glow-appear-dark {
+  0% { border-color: oklch(0.60 0.12 70 / 50%); box-shadow: 0 0 15px oklch(0.60 0.12 70 / 15%); }
+  100% { border-color: oklch(1 0 0 / 10%); box-shadow: none; }
+}
+
+.animate-border-glow-appear {
+  animation: border-glow-appear 1.5s ease-out forwards;
+}
+
+.dark .animate-border-glow-appear {
+  animation: border-glow-appear-dark 1.5s ease-out forwards;
+}
+
+/* Hero orb glow */
+@keyframes orb-glow {
+  0%, 100% { transform: scale(1); opacity: 0.3; filter: blur(40px); }
+  50% { transform: scale(1.2); opacity: 0.5; filter: blur(50px); }
+}
+
+.animate-orb-glow {
+  animation: orb-glow 4s ease-in-out infinite;
+}
+
+/* Magnifying glass search animation */
+@keyframes search-magnify {
+  0%, 100% { transform: translateX(0) scale(1); }
+  50% { transform: translateX(2px) scale(1.05); }
+}
+
+.animate-search-magnify {
+  animation: search-magnify 2s ease-in-out infinite;
+}
+
+/* Category pill shimmer on hover */
+@keyframes pill-shimmer {
+  0% { background-position: -100% 0; }
+  100% { background-position: 100% 0; }
+}
+
+.animate-pill-shimmer:hover {
+  background-image: linear-gradient(90deg, transparent, oklch(0.75 0.15 65 / 8%), transparent);
+  background-size: 200% 100%;
+  animation: pill-shimmer 1s ease forwards;
+}
+
+/* Hero grid pattern overlay */
+.hero-grid-pattern {
+  background-image:
+    linear-gradient(oklch(0.5 0.02 60 / 5%) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0.5 0.02 60 / 5%) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.dark .hero-grid-pattern {
+  background-image:
+    linear-gradient(oklch(0.8 0.01 80 / 4%) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0.8 0.01 80 / 4%) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Input panel gradient left border */
+.input-gradient-border {
+  position: relative;
+}
+
+.input-gradient-border::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 0;
+  width: 3px;
+  border-radius: 2px;
+  background: linear-gradient(to bottom, oklch(0.75 0.15 65), oklch(0.65 0.18 50), oklch(0.55 0.12 40));
+}
+
+.dark .input-gradient-border::before {
+  background: linear-gradient(to bottom, oklch(0.60 0.12 70), oklch(0.55 0.15 55), oklch(0.45 0.10 45));
+}
+
+/* Timeline bar gradient */
+.timeline-bar-gradient {
+  background: linear-gradient(90deg,
+    oklch(0.75 0.15 65 / 20%),
+    oklch(0.65 0.18 50 / 40%),
+    oklch(0.55 0.16 40 / 20%)
+  );
+}
+
+/* Confidence score badge */
+.confidence-badge-high {
+  background: oklch(0.72 0.15 150 / 15%);
+  color: oklch(0.55 0.12 150);
+  border: 1px solid oklch(0.55 0.12 150 / 30%);
+}
+
+.dark .confidence-badge-high {
+  background: oklch(0.40 0.08 150 / 20%);
+  color: oklch(0.72 0.10 150);
+  border-color: oklch(0.45 0.08 150 / 30%);
+}
+
+.confidence-badge-medium {
+  background: oklch(0.75 0.15 65 / 15%);
+  color: oklch(0.55 0.16 65);
+  border: 1px solid oklch(0.55 0.16 65 / 30%);
+}
+
+.dark .confidence-badge-medium {
+  background: oklch(0.45 0.10 65 / 20%);
+  color: oklch(0.75 0.12 65);
+  border-color: oklch(0.45 0.10 65 / 30%);
+}
+
+.confidence-badge-low {
+  background: oklch(0.65 0.18 25 / 15%);
+  color: oklch(0.50 0.15 25);
+  border: 1px solid oklch(0.50 0.15 25 / 30%);
+}
+
+.dark .confidence-badge-low {
+  background: oklch(0.35 0.10 25 / 20%);
+  color: oklch(0.65 0.12 25);
+  border-color: oklch(0.35 0.10 25 / 30%);
+}
+
+/* Card gradient header */
+.card-gradient-header-amber {
+  background: linear-gradient(135deg, oklch(0.75 0.15 65 / 8%), oklch(0.65 0.18 50 / 4%));
+}
+.dark .card-gradient-header-amber {
+  background: linear-gradient(135deg, oklch(0.60 0.12 70 / 10%), oklch(0.50 0.10 50 / 5%));
+}
+
+.card-gradient-header-red {
+  background: linear-gradient(135deg, oklch(0.65 0.18 25 / 8%), oklch(0.55 0.16 25 / 4%));
+}
+.dark .card-gradient-header-red {
+  background: linear-gradient(135deg, oklch(0.50 0.12 25 / 10%), oklch(0.40 0.10 25 / 5%));
+}
+
+.card-gradient-header-sky {
+  background: linear-gradient(135deg, oklch(0.70 0.12 230 / 8%), oklch(0.60 0.10 230 / 4%));
+}
+.dark .card-gradient-header-sky {
+  background: linear-gradient(135deg, oklch(0.50 0.10 230 / 10%), oklch(0.40 0.08 230 / 5%));
+}
+
+.card-gradient-header-green {
+  background: linear-gradient(135deg, oklch(0.72 0.15 150 / 8%), oklch(0.62 0.12 150 / 4%));
+}
+.dark .card-gradient-header-green {
+  background: linear-gradient(135deg, oklch(0.45 0.08 150 / 10%), oklch(0.35 0.06 150 / 5%));
+}
+
+.card-gradient-header-emerald {
+  background: linear-gradient(135deg, oklch(0.72 0.12 160 / 8%), oklch(0.62 0.10 160 / 4%));
+}
+.dark .card-gradient-header-emerald {
+  background: linear-gradient(135deg, oklch(0.45 0.08 160 / 10%), oklch(0.35 0.06 160 / 5%));
+}
+
+.card-gradient-header-teal {
+  background: linear-gradient(135deg, oklch(0.72 0.10 175 / 8%), oklch(0.62 0.08 175 / 4%));
+}
+.dark .card-gradient-header-teal {
+  background: linear-gradient(135deg, oklch(0.45 0.08 175 / 10%), oklch(0.35 0.06 175 / 5%));
+}
+
+.card-gradient-header-orange {
+  background: linear-gradient(135deg, oklch(0.70 0.16 55 / 8%), oklch(0.60 0.14 55 / 4%));
+}
+.dark .card-gradient-header-orange {
+  background: linear-gradient(135deg, oklch(0.50 0.10 55 / 10%), oklch(0.40 0.08 55 / 5%));
+}
+
+.card-gradient-header-purple {
+  background: linear-gradient(135deg, oklch(0.65 0.15 300 / 8%), oklch(0.55 0.12 300 / 4%));
+}
+.dark .card-gradient-header-purple {
+  background: linear-gradient(135deg, oklch(0.45 0.10 300 / 10%), oklch(0.35 0.08 300 / 5%));
+}
+
+.card-gradient-header-slate {
+  background: linear-gradient(135deg, oklch(0.70 0.01 250 / 6%), oklch(0.60 0.01 250 / 3%));
+}
+.dark .card-gradient-header-slate {
+  background: linear-gradient(135deg, oklch(0.40 0.01 250 / 8%), oklch(0.30 0.01 250 / 4%));
+}
+
+/* Ferramentas stat card gradient border */
+.stat-card-gradient-border {
+  position: relative;
+  background: var(--card);
+  border-radius: var(--radius);
+}
+
+.stat-card-gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(135deg, oklch(0.75 0.15 65), oklch(0.65 0.18 50), oklch(0.55 0.12 40));
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.dark .stat-card-gradient-border::before {
+  background: linear-gradient(135deg, oklch(0.60 0.12 70), oklch(0.50 0.15 55), oklch(0.40 0.10 45));
+}
+
+/* Progress ring animation */
+@keyframes progress-ring-fill {
+  from { stroke-dashoffset: var(--ring-circumference, 100); }
+  to { stroke-dashoffset: var(--ring-offset, 0); }
+}
+
+.animate-progress-ring {
+  animation: progress-ring-fill 1s ease-out forwards;
+}

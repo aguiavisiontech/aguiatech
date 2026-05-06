@@ -19,6 +19,8 @@ import { Config } from '@/componentes/aguiatech/config'
 import { Agentes } from '@/componentes/aguiatech/agentes'
 import { Orquestrador } from '@/componentes/aguiatech/orquestrador'
 import { useEstadoAguiatech, type SecaoAtiva } from '@/lib/estado'
+import { CentroNotificacoes } from '@/componentes/aguiatech/centro-notificacoes'
+import { AtalhosOverlay } from '@/componentes/aguiatech/atalhos-overlay'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CommandDialog,
@@ -43,6 +45,7 @@ import {
   Search,
   Bot,
   GraduationCap,
+  Bell,
 } from 'lucide-react'
 
 const secoesNavegacao: { secao: SecaoAtiva; rotulo: string; icone: React.ElementType; atalho: string }[] = [
@@ -153,11 +156,25 @@ function CommandPalette() {
 }
 
 function AtalhosGlobais() {
-  const { setSecaoAtiva, toggleSidebar } = useEstadoAguiatech()
+  const { setSecaoAtiva, toggleSidebar, setAtalhosAbertos, atalhosAbertos, commandPaletteAberta } = useEstadoAguiatech()
   const { theme, setTheme } = useTheme()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // ? para abrir atalhos overlay (only when not in an input)
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const target = e.target as HTMLElement
+        const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
+        if (!isInput) {
+          e.preventDefault()
+          setAtalhosAbertos(!atalhosAbertos)
+        }
+      }
+      // Ctrl+/ para abrir atalhos overlay
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault()
+        setAtalhosAbertos(!atalhosAbertos)
+      }
       // Ctrl+\ para toggle sidebar
       if ((e.ctrlKey || e.metaKey) && e.key === '\\') {
         e.preventDefault()
@@ -183,7 +200,35 @@ function AtalhosGlobais() {
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [setSecaoAtiva, toggleSidebar, theme, setTheme])
+  }, [setSecaoAtiva, toggleSidebar, theme, setTheme, setAtalhosAbertos, atalhosAbertos, commandPaletteAberta])
+
+  return null
+}
+
+function NotificacoesSeed() {
+  const { notificacoes, adicionarNotificacao } = useEstadoAguiatech()
+
+  useEffect(() => {
+    // Only seed if no notifications exist yet
+    if (notificacoes.length > 0) return
+
+    const seeds: Array<Omit<import('@/lib/estado').Notificacao, 'id' | 'createdAt' | 'lida'>> = [
+      { tipo: 'success', titulo: 'Integração n8n conectada', descricao: 'A integração com n8n foi conectada com sucesso. 12 ferramentas disponíveis.' },
+      { tipo: 'info', titulo: 'Novo agente criado', descricao: 'O agente "Assistente de Vendas" foi criado e está pronto para uso.' },
+      { tipo: 'warning', titulo: 'Integração WhatsApp instável', descricao: 'A conexão com WhatsApp Business apresentou latência elevada nos últimos 5 minutos.' },
+      { tipo: 'system', titulo: 'Atualização do sistema', descricao: 'O sistema foi atualizado para a versão 2.4.1. Novos recursos disponíveis.' },
+      { tipo: 'error', titulo: 'Falha na conexão Telegram', descricao: 'Não foi possível conectar ao bot do Telegram. Verifique o token de acesso.' },
+      { tipo: 'info', titulo: 'Nova conversa iniciada', descricao: 'Uma nova conversa foi iniciada com o agente "Suporte Técnico".' },
+      { tipo: 'success', titulo: 'Backup realizado', descricao: 'O backup automático dos dados foi concluído com sucesso.' },
+    ]
+
+    // Stagger the notifications so they appear natural
+    seeds.forEach((seed, i) => {
+      setTimeout(() => {
+        adicionarNotificacao(seed)
+      }, (i + 1) * 300)
+    })
+  }, [notificacoes.length, adicionarNotificacao])
 
   return null
 }
@@ -207,7 +252,8 @@ function SecaoConteudo({ secao }: { secao: SecaoAtiva }) {
 }
 
 function ConteudoPrincipal() {
-  const { secaoAtiva, setCommandPaletteAberta } = useEstadoAguiatech()
+  const { secaoAtiva, setCommandPaletteAberta, setNotificacoesAbertas, notificacoes } = useEstadoAguiatech()
+  const naoLidas = notificacoes.filter((n) => !n.lida).length
 
   const rotulos: Record<string, string> = {
     painel: 'Painel',
@@ -259,6 +305,17 @@ function ConteudoPrincipal() {
               ⌘K
             </kbd>
           </button>
+          <button
+            onClick={() => setNotificacoesAbertas(true)}
+            className="relative p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+          >
+            <Bell className="size-4" />
+            {naoLidas > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 size-3.5 rounded-full bg-red-500 text-white text-[8px] font-bold flex items-center justify-center">
+                {naoLidas > 9 ? '9+' : naoLidas}
+              </span>
+            )}
+          </button>
         </div>
       </header>
 
@@ -296,6 +353,9 @@ export default function Home() {
           <ConteudoPrincipal />
           <CommandPalette />
           <AtalhosGlobais />
+          <NotificacoesSeed />
+          <CentroNotificacoes />
+          <AtalhosOverlay />
         </SidebarProvider>
       </QueryProvider>
     </ThemeProvider>
