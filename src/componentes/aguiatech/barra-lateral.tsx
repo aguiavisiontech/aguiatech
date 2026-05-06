@@ -70,7 +70,6 @@ const itensNavegacao: { secao: SecaoAtiva; rotulo: string; icone: React.ElementT
   { secao: 'ferramentas', rotulo: 'Ferramentas', icone: Wrench, atalho: 'Ctrl+6', corIcone: 'text-orange-500' },
   { secao: 'conexoes-mcp', rotulo: 'Integrações MCP', icone: Link, atalho: 'Ctrl+7', corIcone: 'text-amber-500' },
   { secao: 'diretrizes-ia', rotulo: 'Diretrizes IA', icone: GraduationCap, atalho: 'Ctrl+Shift+I', corIcone: 'text-violet-500' },
-  { secao: 'agentes-ia', rotulo: 'Agentes IA', icone: Cpu, atalho: 'Ctrl+Shift+A', corIcone: 'text-emerald-500' },
   { secao: 'agendador', rotulo: 'Agendador', icone: Clock, atalho: 'Ctrl+0', corIcone: 'text-rose-500' },
   { secao: 'config', rotulo: 'Configurações', icone: Settings, atalho: 'Ctrl+Shift+,', corIcone: 'text-slate-500' },
 ]
